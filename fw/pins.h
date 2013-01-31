@@ -29,7 +29,7 @@
 #define BTATENABLE  PB1
 
 #define SPISCK      PB7
-#define SPIMOSI     PB5
+#define SPIDO       PB6
 
 #define RTCCEPORT   PORTB
 #define RTCCEDDR    DDRB
@@ -50,9 +50,10 @@
 #define HZPIN       PD2
 
 #define PORTB_INIT  (1 << BTRESET) | (1 << BLANK)
-#define DDRB_INIT   (1 << BTRESET) | (1 << BTATENABLE) | (1 << RTCCE) | \\
-					(1 << LATCH) | (1 << BLANK) | (1 << SPISCK) | (1 << SPIMOSI)
+#define DDRB_INIT   (1 << BTRESET) | (1 << BTATENABLE) | (1 << RTCCE) | \
+					(1 << LATCH) | (1 << BLANK) | (1 << SPISCK) | (1 << SPIDO)
 
-#define DDRD_INIT   (1 << TXD_BIT) | (1 << )
+#define PORTD_INIT  (1 << HZPIN)
+#define DDRD_INIT   SEGMASK
 
 #endif /* PINS_H_ */

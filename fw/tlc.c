@@ -39,13 +39,6 @@ void tlc_init()
 	cur_segment = 0;
 	tlc_clear();
 
-	/* Set BLANK high before setting pin direction to output
-	 * to make sure the TLC stays blanked. */
-	LATCHPORT |= 1 << BLANK;
-	LATCHDDR |= (1 << LATCH) | (1 << BLANK);
-
-	SEGDDR |= SEGMASK;
-
 	/* Set up T/C 0 to run at fCLK/64 and count to 125,
 	 * giving us interrupts at 500Hz */
 	OCR0A = 124;

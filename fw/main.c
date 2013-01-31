@@ -18,6 +18,13 @@
 
 int main(void)
 {
+	/* Set BLANK high before setting pin direction to output
+	 * to make sure the TLC stays blanked. */
+	PORTB = PORTB_INIT;
+	DDRB = DDRB_INIT;
+	PORTD = PORTD_INIT;
+	DDRD = DDRD_INIT;
+
 	sei();
 	spi_init();
 	rtc_init();

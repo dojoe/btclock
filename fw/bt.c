@@ -14,17 +14,18 @@
 void bt_init()
 {
 	/* reset BT module */
-	BTRESETDDR |= 1 << BTRESET;
 	BTRESETPORT &= ~(1 << BTRESET);
 	_delay_ms(10);
 	BTRESETPORT |= 1 << BTRESET;
 
 	/* enable AT mode */
-	BTATDDR |= 1 << BTATENABLE;
 	BTATPORT |= 1 << BTATENABLE;
 
 	/* set up UART */
 	uart_init(UART_BAUD_SELECT(9600, F_CPU));
+
+	/* Turn on PIO4 that supplies the button with 3.3V ;) */
+	uart_puts_P("AT+PIO=4,1\r\n");
 }
 
 void bt_led_on()
