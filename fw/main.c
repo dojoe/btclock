@@ -26,7 +26,6 @@ int main(void)
 	DDRD = DDRD_INIT;
 
 	sei();
-	spi_init();
 	rtc_init();
 	tlc_init();
 	bt_init();

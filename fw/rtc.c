@@ -20,7 +20,7 @@ volatile struct time time;
 
 /* Disable interrupts while fiddling with the RTC because
  * the int-driven TLC driver uses SPI, too. */
-#define RTC_BEGIN() { RTCCEPORT |= 1 << RTCCE; cli(); }
+#define RTC_BEGIN() { cli(); RTCCEPORT |= 1 << RTCCE; }
 #define RTC_END() { RTCCEPORT &= ~(1 << RTCCE); sei(); }
 
 ISR(INT0_vect)
@@ -35,7 +35,7 @@ ISR(INT0_vect)
 	time.hour = hour = spi_xfer(0);
 
 	/* only read date on midnight */
-	if (!time.second && !time.minute && !time.hour)
+	if (!second && !minute && !hour)
 	{
 		time.day = spi_xfer(0);
 		spi_xfer(0); /* skip weekday */
@@ -48,7 +48,10 @@ ISR(INT0_vect)
 	if (update_display_from_rtc)
 	{
 		display[0] = font_get_digit(hour >> 4);
-		display[1] = font_get_digit(hour & 0xF) | ((second & 1) ? DP : 0);
+		uint16_t seg1 = font_get_digit(hour & 0xF);
+		if (second & 1)
+			seg1 |= DP;
+		display[1] = seg1;
 		display[2] = font_get_digit(minute >> 4);
 		display[3] = font_get_digit(minute & 0xF);
 	}

@@ -10,11 +10,6 @@
 
 #include <avr/io.h>
 
-static inline void spi_init()
-{
-	DDRB |= (1 << PB6) /* DO */ | (1 << PB7) /* USCK */;
-}
-
 uint8_t spi_xfer(uint8_t data_out);
 
 #endif /* SPI_H_ */

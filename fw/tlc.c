@@ -5,6 +5,7 @@
  *      Author: dojoe
  */
 
+#include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "pins.h"
@@ -28,7 +29,11 @@ ISR(TIMER1_COMPA_vect)
 	LATCHPORT |= 1 << BLANK;
 	LATCHPORT |= 1 << LATCH;
 	SEGPORT = new_segport;
-	LATCHPORT &= ~((1 << BLANK) | (1 << LATCH));
+	/* Resetting the bits in two lines generates two instructions (cbi, cbi),
+	 * whereas doing it in one line generates three: in, andi, out
+	 */
+	LATCHPORT &= ~(1 << LATCH);
+	LATCHPORT &= ~(1 << BLANK);
 
 	/* next time, next segment */
 	cur_segment = (cur_segment + 1) & 3;
@@ -51,5 +56,6 @@ void tlc_init()
 
 void tlc_clear()
 {
-	display[0] = display[1] = display[2] = display[3] = 0;
+//	display[0] = display[1] = display[2] = display[3] = 0;
+	memset(display, 0, sizeof(display));
 }
