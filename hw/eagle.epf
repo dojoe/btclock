@@ -340,8 +340,8 @@ UsedLibrary="tlc59282dbq.lbr"
 
 [Win_1]
 Type="Control Panel"
-Loc="169 100 768 499"
-State=1
+Loc="332 293 931 692"
+State=2
 Number=0
 
 [Desktop]
