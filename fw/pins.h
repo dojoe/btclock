@@ -14,7 +14,7 @@
  * PD2 - 1HZ input / INT0
  * PD3-PD6 - Display Enable
  * PB0 - BT Reset
- * PB1 - BT AT Enable
+ * PB1 - BT AT Enable / Button
  * PB2 - RTC CE
  * PB3 - LATCH / OC1A
  * PB4 - BLANK / OC1B
@@ -27,6 +27,9 @@
 #define BTATPORT    PORTB
 #define BTATDDR     DDRB
 #define BTATENABLE  PB1
+
+#define BUTTONPIN   PINB
+#define BUTTON      BTATENABLE
 
 #define SPISCK      PB7
 #define SPIDO       PB6
@@ -50,7 +53,7 @@
 #define HZPIN       PD2
 
 #define PORTB_INIT  (1 << BTRESET) | (1 << BLANK)
-#define DDRB_INIT   (1 << BTRESET) | (1 << BTATENABLE) | (1 << RTCCE) | \
+#define DDRB_INIT   (1 << BTRESET) | (1 << RTCCE) | \
 					(1 << LATCH) | (1 << BLANK) | (1 << SPISCK) | (1 << SPIDO)
 
 #define PORTD_INIT  (1 << HZPIN)

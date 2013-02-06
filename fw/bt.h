@@ -11,6 +11,7 @@
 #include <inttypes.h>
 
 void bt_init();
+void bt_new_pin();
 void bt_led_on();
 void bt_led_off();
 

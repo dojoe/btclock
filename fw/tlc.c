@@ -15,7 +15,7 @@
 uint16_t display[4];
 static uint8_t cur_segment;
 
-ISR(TIMER1_COMPA_vect)
+ISR(TIMER0_COMPA_vect)
 {
 	/* prepare new values for TLC register and segment enables */
 	uint16_t bits = display[cur_segment];

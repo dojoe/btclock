@@ -16,6 +16,7 @@ extern volatile uint8_t update_display_from_rtc;
 extern volatile struct time time;
 
 void rtc_init();
+void rtc_get_time();
 void rtc_set_time(uint8_t year, uint8_t month, uint8_t day,
 		uint8_t hours, uint8_t minutes, uint8_t seconds);
 

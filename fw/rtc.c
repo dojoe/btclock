@@ -6,6 +6,7 @@
  */
 
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include "rtc.h"
 #include "spi.h"
 #include "pins.h"
@@ -30,16 +31,16 @@ ISR(INT0_vect)
 	/* Read current time from RTC */
 	RTC_BEGIN();
 	spi_xfer(RTC_READ_CMD(2));
-	time.second = second = spi_xfer(0);
-	time.minute = minute = spi_xfer(0);
-	time.hour = hour = spi_xfer(0);
+	time.second = second = spi_xfer(0) & 0x7F;
+	time.minute = minute = spi_xfer(0) & 0x7F;
+	time.hour = hour = spi_xfer(0) & 0x3F;
 
 	/* only read date on midnight */
 	if (!second && !minute && !hour)
 	{
-		time.day = spi_xfer(0);
+		time.day = spi_xfer(0) & 0x3F;
 		spi_xfer(0); /* skip weekday */
-		time.month = spi_xfer(0);
+		time.month = spi_xfer(0) & 0x1F;
 		time.year = spi_xfer(0);
 	}
 	RTC_END();
@@ -59,17 +60,38 @@ ISR(INT0_vect)
 
 void rtc_init()
 {
-	/* reset RTC by writing magic reset value to CR1 */
+	/* check whether the RTC oscillator has run through */
 	RTC_BEGIN();
-	spi_xfer(RTC_WRITE_CMD(0));
-	spi_xfer(0x58);
+	spi_xfer(RTC_READ_CMD(2));
+	uint8_t tmp = spi_xfer(0);
 	RTC_END();
 
-	/* Set CLKOUT pin to output 1Hz clock; all other reset values are OK */
-	RTC_BEGIN();
-	spi_xfer(RTC_WRITE_CMD(0xE));
-	spi_xfer(0x63);
-	RTC_END();
+	if (tmp & 0x80)
+	{
+		/* oscillator has been interrupted: reset RTC and time */
+
+		/* reset RTC by writing magic reset value to CR1 */
+		RTC_BEGIN();
+		spi_xfer(RTC_WRITE_CMD(0));
+		spi_xfer(0x58);
+		RTC_END();
+
+		_delay_ms(100);
+
+		/* Set CLKOUT pin to output 1Hz clock; all other reset values are OK */
+		RTC_BEGIN();
+		spi_xfer(RTC_WRITE_CMD(0xE));
+		spi_xfer(0x63);
+		RTC_END();
+
+		/* Clear time values */
+		rtc_set_time(0x13, 0x01, 0x01, 0x00, 0x00, 0x00);
+	}
+	else
+	{
+		/* read full time once */
+		rtc_get_time();
+	}
 
 	/* Enable 1HZ interrupt _after_ setting up RTC CLKOUT */
 	MCUCR |= 3 << ISC00;
@@ -90,18 +112,21 @@ void rtc_set_time(uint8_t year, uint8_t month, uint8_t day,
 	spi_xfer(month);
 	spi_xfer(year);
 	RTC_END();
+
+	/* read what we just wrote */
+	rtc_get_time();
 }
 
 void rtc_get_time()
 {
 	RTC_BEGIN();
 	spi_xfer(RTC_READ_CMD(2));
-	time.second = spi_xfer(0);
-	time.minute = spi_xfer(0);
-	time.hour = spi_xfer(0);
-	time.day = spi_xfer(0);
+	time.second = spi_xfer(0) & 0x7F;
+	time.minute = spi_xfer(0) & 0x7F;
+	time.hour = spi_xfer(0) & 0x3F;
+	time.day = spi_xfer(0) & 0x3F;
 	spi_xfer(0); /* skip weekday */
-	time.month = spi_xfer(0);
+	time.month = spi_xfer(0) & 0x1F;
 	time.year = spi_xfer(0);
 	RTC_END();
 }

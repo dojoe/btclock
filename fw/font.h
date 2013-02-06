@@ -10,7 +10,7 @@
 
 #include <avr/pgmspace.h>
 
-#define DP 0x0003
+#define DP 0x0001 /* Only switch on one channel for DP */
 
 #define FONTLOW '0'
 #define FONTHIGH 'Z'
