@@ -11,6 +11,7 @@
 #include <avr/io.h>
 
 /*
+ * PD0, PD1 - UART
  * PD2 - 1HZ input / INT0
  * PD3-PD6 - Display Enable
  * PB0 - BT Reset
@@ -18,6 +19,7 @@
  * PB2 - RTC CE
  * PB3 - LATCH / OC1A
  * PB4 - BLANK / OC1B
+ * PB5..PB7 - SPI (TLC, RTC)
  */
 
 #define BTRESETPORT PORTB

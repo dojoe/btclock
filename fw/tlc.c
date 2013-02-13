@@ -5,12 +5,7 @@
  *      Author: dojoe
  */
 
-#include <string.h>
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include "pins.h"
-#include "spi.h"
-#include "tlc.h"
+#include "btclock.h"
 
 uint16_t display[4];
 static uint8_t cur_segment;
@@ -19,7 +14,11 @@ ISR(TIMER0_COMPA_vect)
 {
 	/* prepare new values for TLC register and segment enables */
 	uint16_t bits = display[cur_segment];
-	uint8_t new_segport = (SEGPORT & ~SEGMASK) | ((8 << SEGBASE) >> cur_segment);
+	uint8_t segport_clear = SEGPORT | SEGMASK;
+	uint8_t new_segport = (segport_clear & ~SEGMASK) | (~((8 << SEGBASE) >> cur_segment) & SEGMASK);
+
+	/* Clear the segment drivers early to account for slow recovery time */
+	SEGPORT = segport_clear;
 
 	/* shift new value into TLC */
 	spi_xfer(bits >> 8);

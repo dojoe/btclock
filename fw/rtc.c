@@ -5,16 +5,11 @@
  *      Author: dojoe
  */
 
-#include <avr/interrupt.h>
-#include <util/delay.h>
-#include "rtc.h"
-#include "spi.h"
-#include "pins.h"
-#include "tlc.h"
-#include "font.h"
+#include "btclock.h"
 
 volatile uint8_t update_display_from_rtc;
 volatile struct time time;
+volatile uint8_t tick;
 
 #define RTC_WRITE_CMD(address) (0x10 | address)
 #define RTC_READ_CMD(address) (0x90 | address)
@@ -56,6 +51,8 @@ ISR(INT0_vect)
 		display[2] = font_get_digit(minute >> 4);
 		display[3] = font_get_digit(minute & 0xF);
 	}
+
+	tick = 1;
 }
 
 void rtc_init()

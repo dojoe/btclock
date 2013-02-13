@@ -5,7 +5,7 @@
  *      Author: dojoe
  */
 
-#include "font.h"
+#include "btclock.h"
 
 #define a 0x3000
 #define b 0xC000

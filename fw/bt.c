@@ -5,14 +5,7 @@
  *      Author: dojoe
  */
 
-#include "bt.h"
-#include "pins.h"
-#include "uart.h"
-#include "font.h"
-#include "tlc.h"
-#include <stdlib.h>
-#include <util/delay.h>
-#include <avr/pgmspace.h>
+#include "btclock.h"
 
 void bt_send(const char *str)
 {

@@ -5,7 +5,7 @@
  *      Author: dojoe
  */
 
-#include "spi.h"
+#include "btclock.h"
 
 uint8_t spi_xfer(uint8_t data_out)
 {

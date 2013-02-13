@@ -5,17 +5,8 @@
  *      Author: dojoe
  */
 
-
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <util/delay.h>
-#include "pins.h"
-#include "bt.h"
-#include "spi.h"
-#include "rtc.h"
-#include "tlc.h"
-#include "font.h"
-#include "uart.h"
+#include "btclock.h"
+#include <avr/sleep.h>
 
 uint8_t poll_button()
 {
@@ -45,40 +36,26 @@ int main(void)
 	tlc_init();
 	bt_init();
 
-	//for (uint8_t i = 0; i < 4; i++)
-	//	display[i] = font_get_digit(i + 1);
+	update_display_from_rtc = 1;
 
-	//rtc_set_time(0x12, 0x02, 0x03, 0x15, 0x30, 0x00);
-
-	uint8_t last_button = 0;
-
+	set_sleep_mode(SLEEP_MODE_IDLE);
 	while (1)
 	{
-		bt_led_on();
-		_delay_ms(500);
-		bt_led_off();
-		_delay_ms(500);
-		char str[15] = "YYMMDDhhmmss\r\n";
-		str[0] = '0' + (time.year >> 4);
-		str[1] = '0' + (time.year & 0xF);
-		str[2] = '0' + (time.month >> 4);
-		str[3] = '0' + (time.month & 0xF);
-		str[4] = '0' + (time.day >> 4);
-		str[5] = '0' + (time.day & 0xF);
-		str[6] = '0' + (time.hour >> 4);
-		str[7] = '0' + (time.hour & 0xF);
-		str[8] = '0' + (time.minute >> 4);
-		str[9] = '0' + (time.minute & 0xF);
-		str[10] = '0' + (time.second >> 4);
-		str[11] = '0' + (time.second & 0xF);
-		uart_puts(str);
-
-		uint8_t button = !poll_button();
-		if (last_button & !button)
+		if (tick)  /* happens once every second */
 		{
-			bt_new_pin();
+			tick = 0;
+			static uint8_t last_button = 0;
+			uint8_t button = !poll_button();
+			if (last_button & !button)
+			{
+				bt_new_pin();
+			}
+			last_button = button;
 		}
-		last_button = button;
+
+		cmd_poll();
+
+		sleep_mode();
 	}
 	return 0;
 }
