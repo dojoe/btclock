@@ -8,6 +8,14 @@
 #include "btclock.h"
 #include <avr/sleep.h>
 
+/* TODO:
+ *   - proper button reaction
+ *   - scrolling with fullstops in text
+ *   - switchover between clock and text
+ *   - text <= 4 chars
+ *   - dark times
+ */
+
 uint8_t poll_button()
 {
 	/* If we're transmitting something, wait until done. */
@@ -32,11 +40,10 @@ int main(void)
 	DDRD = DDRD_INIT;
 
 	sei();
+	config_init();
 	rtc_init();
 	tlc_init();
 	bt_init();
-
-	update_display_from_rtc = 1;
 
 	set_sleep_mode(SLEEP_MODE_IDLE);
 	while (1)
@@ -44,6 +51,12 @@ int main(void)
 		if (tick)  /* happens once every second */
 		{
 			tick = 0;
+
+			if (0 == countdown)
+				next_line();
+			else
+				countdown--;
+
 			static uint8_t last_button = 0;
 			uint8_t button = !poll_button();
 			if (last_button & !button)

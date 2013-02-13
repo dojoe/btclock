@@ -7,19 +7,15 @@
 
 #include "btclock.h"
 
-static char cmd_buf[16];
+static char cmd_buf[TEXT_MAX + 2]; /* for "N=<up to TEXT_MAX chars>" */
 static uint8_t cmd_buf_ptr = 0;
-
-static const PROGMEM char help[] =
-		"     H A L P !\n\n"
-		"Set time: T=YYMMDDhhmmss\n"
-		"Get time: T?\n"
-		"    all digits 0..9\n"
-		"    HH is 24hr format\n\n";
 
 static uint8_t set_time()
 {
 	uint8_t i, data[6];
+
+	if (cmd_buf_ptr != 14)
+		return 0;
 
 	for (i = 0; i < 6; i++)
 	{
@@ -48,7 +44,7 @@ static void print_bcd(uint8_t value, char extra_char)
 	uart_putc(extra_char);
 }
 
-static void get_time()
+static uint8_t get_time()
 {
 	uart_putc('2');
 	uart_putc('0');
@@ -58,25 +54,123 @@ static void get_time()
 	print_bcd(time.hour, ':');
 	print_bcd(time.minute, ':');
 	print_bcd(time.second, '\n');
+	return 1;
+}
+
+static uint8_t set_sequence()
+{
+	struct sequence_entry tmp_sequence[MAX_SEQUENCE];
+	uint8_t sequence_ptr, cmd_ptr = 2;
+
+	memset(tmp_sequence, 0, sizeof(tmp_sequence));
+
+	for (sequence_ptr = 0; sequence_ptr < MAX_SEQUENCE; sequence_ptr++)
+	{
+		char c;
+		uint8_t duration = 0;
+
+		if (cmd_ptr >= cmd_buf_ptr)
+			break;
+
+		c = cmd_buf[cmd_ptr++];
+		if (c < '0' || c > '1' + NUM_LINES)
+			return 0;
+		tmp_sequence[sequence_ptr].which = c - '0';
+
+		while (1)
+		{
+			if (cmd_ptr >= cmd_buf_ptr)
+				break;
+
+			c = cmd_buf[cmd_ptr++];
+
+			if (c == ',')
+				break;
+
+			if (c < '0' || c > '9')
+				return 0;
+
+			duration *= 10;
+			duration += c - '0';
+		}
+
+		if (!duration)
+			return 0;
+
+		tmp_sequence[sequence_ptr].duration = duration;
+	}
+
+	if (!sequence_ptr)
+		return 0;
+
+	memcpy(sequence, tmp_sequence, sizeof(tmp_sequence));
+	save_sequence();
+	return 1;
+}
+
+static uint8_t print_digit(uint8_t value, uint8_t divisor)
+{
+	uint8_t digit;
+	for (digit = 0; value >= divisor; value -= divisor, digit++);
+	if (digit)
+		uart_putc(digit + '0');
+	return value;
+}
+
+static uint8_t get_sequence()
+{
+	uint8_t sequence_ptr, value;
+
+	for (sequence_ptr = 0; sequence_ptr < MAX_SEQUENCE; sequence_ptr++)
+	{
+		value = sequence[sequence_ptr].duration;
+		if (sequence_ptr)
+		{
+			if (value)
+				uart_putc(',');
+			else
+				break;
+		}
+		uart_putc(sequence[sequence_ptr].which + '0');
+		value = print_digit(value, 100);
+		value = print_digit(value, 10);
+		uart_putc(value + '0');
+	}
+
+	uart_putc('\n');
+	return 1;
 }
 
 static uint8_t cmd_parse()
 {
-	if (cmd_buf[0] == '?')
+	char type = cmd_buf[0], op = cmd_buf[1];
+	uint8_t set = ('=' == op);
+
+	if (cmd_buf_ptr == 1 || !(set || op == '?'))
+		return 0;
+
+	if (type == 'T')
+		return set ? set_time() : get_time();
+	else if (type == 'S')
+		return set ? set_sequence() : get_sequence();
+	else if (type >= '1' && type <= '0' + NUM_LINES)
 	{
-		uart_puts_p(help);
+		type -= '1';
+		if (set)
+		{
+			if (cmd_buf_ptr - 2 > TEXT_MAX - 1)
+				return 0;
+			set_line(type, cmd_buf + 2, cmd_buf_ptr - 2);
+		}
+		else
+		{
+			get_line(type, cmd_buf);
+			uart_puts(cmd_buf);
+			uart_putc('\n');
+		}
 		return 1;
 	}
-	else if (cmd_buf[0] == 'T')
-	{
-		if (cmd_buf_ptr == 14 && cmd_buf[1] == '=')
-			return set_time();
-		else if (cmd_buf_ptr == 2 && cmd_buf[1] == '?')
-		{
-			get_time();
-			return 1;
-		}
-	}
+
 	return 0;
 }
 

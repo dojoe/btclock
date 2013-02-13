@@ -8,11 +8,15 @@
 #include "btclock.h"
 
 uint16_t display[4];
-static uint8_t cur_segment;
+static uint8_t int_counter;
+
+volatile uint8_t text_line_offset;
+char text_line[TEXT_MAX + 3];
 
 ISR(TIMER0_COMPA_vect)
 {
 	/* prepare new values for TLC register and segment enables */
+	uint8_t cur_segment = int_counter & 3;
 	uint16_t bits = display[cur_segment];
 	uint8_t segport_clear = SEGPORT | SEGMASK;
 	uint8_t new_segport = (segport_clear & ~SEGMASK) | (~((8 << SEGBASE) >> cur_segment) & SEGMASK);
@@ -35,12 +39,31 @@ ISR(TIMER0_COMPA_vect)
 	LATCHPORT &= ~(1 << BLANK);
 
 	/* next time, next segment */
-	cur_segment = (cur_segment + 1) & 3;
+	int_counter++;
+	if (0 == (int_counter & 0x7F) && !update_display_from_rtc)
+	{
+		uint8_t offset = text_line_offset++;
+		uint8_t i;
+		if (offset < 3)
+			offset = 3;
+		offset -= 3;
+		if (0 == text_line[offset])
+			text_line_offset = offset = 0;
+		for (i = 0; i < 4; i++)
+		{
+			display[i] = font_get_char(text_line[offset++]);
+			if ('.' == text_line[offset])
+			{
+				display[i] |= DP;
+				offset++;
+			}
+		}
+	}
 }
 
 void tlc_init()
 {
-	cur_segment = 0;
+	int_counter = 0;
 	tlc_clear();
 
 	/* Set up T/C 0 to run at fCLK/64 and count to 125,

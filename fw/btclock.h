@@ -20,6 +20,9 @@
 #include "pins.h"
 #include "uart.h"
 
+#define _STRINGIFY(s) #s
+#define STRINGIFY(x) _STRINGIFY(x)
+
 /* bt.c */
 
 void bt_init();
@@ -30,6 +33,26 @@ void bt_led_off();
 /* cmd.c */
 
 void cmd_poll();
+
+/* config.c */
+
+#define MAX_SEQUENCE 8
+#define NUM_LINES 4
+#define TEXT_MAX 50
+
+struct sequence_entry {
+	uint8_t which;    /* 0 = time, 1..NUM_LINES = text */
+	uint8_t duration; /* in seconds, 0 = skip */
+};
+
+extern struct sequence_entry sequence[MAX_SEQUENCE];
+extern uint8_t countdown;
+
+void config_init();
+void save_sequence();
+void next_line();
+void set_line(uint8_t index, char *buf, uint8_t length);
+void get_line(uint8_t index, char *buf);
 
 /* font.c */
 
@@ -78,6 +101,9 @@ uint8_t spi_xfer(uint8_t data_out);
 /* tlc.c */
 
 extern uint16_t display[4];
+
+extern volatile uint8_t text_line_offset;
+extern char text_line[TEXT_MAX + 3];
 
 void tlc_init();
 void tlc_clear();
