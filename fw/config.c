@@ -21,6 +21,7 @@ static uint8_t sequence_ptr;
 void config_init()
 {
 	eeprom_read_block(sequence, config.sequence, sizeof(config.sequence));
+	memset(text_line, 0, sizeof(text_line));
 	sequence_ptr = 0;
 	next_line();
 }
@@ -32,13 +33,21 @@ void next_line()
 
 	if (0 == which)
 	{
-		update_display_from_rtc = 1;
+		display_mode = TIME;
+		tlc_show_time();
+	}
+	else if (1 == which)
+	{
+		display_mode = DATE;
+		tlc_show_date();
 	}
 	else
 	{
-		eeprom_read_block(text_line, config.lines[which - 1], TEXT_MAX);
+		display_mode = STATIC;
+		eeprom_read_block(text_line + 3, config.lines[which - 2], TEXT_MAX);
 		text_line_offset = 0;
-		update_display_from_rtc = 0;
+		text_line_length = strlen(text_line + 3);
+		display_mode = TEXT;
 	}
 
 	sequence_ptr++;
@@ -49,6 +58,8 @@ void next_line()
 void save_sequence()
 {
 	eeprom_write_block(sequence, config.sequence, sizeof(sequence));
+	sequence_ptr = 0;
+	countdown = 0;
 }
 
 void set_line(uint8_t index, char *buf, uint8_t length)

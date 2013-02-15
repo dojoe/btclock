@@ -7,6 +7,27 @@
 
 #include "btclock.h"
 
+#define FONTLOW '0'
+#define FONTHIGH 'Z'
+#define FONTSIZE (FONTHIGH - FONTLOW + 1)
+
+static const PROGMEM uint16_t font[FONTSIZE];
+
+uint16_t font_get_char(char c)
+{
+	if (c >= FONTLOW && c <= FONTHIGH)
+		return pgm_read_word(font + (c - FONTLOW));
+	else if (c >= 'a' && c <= 'z')
+		return pgm_read_word(font + (c - ('a' - 'A') - FONTLOW));
+	else
+		return 0;
+}
+
+uint16_t font_get_digit(uint8_t value)
+{
+	return pgm_read_word(font + value);
+}
+
 #define a 0x3000
 #define b 0xC000
 #define c 0x000C
@@ -15,7 +36,7 @@
 #define f 0x0C00
 #define g 0x0300
 
-const PROGMEM uint16_t font[FONTSIZE] = {
+static const PROGMEM uint16_t font[FONTSIZE] = {
 		/* 0 */ a | b | c | d | e | f,
 		/* 1 */ b | c,
 		/* 2 */ a | b | g | e | d,

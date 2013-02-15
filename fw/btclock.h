@@ -58,26 +58,13 @@ void get_line(uint8_t index, char *buf);
 
 #define DP 0x0001 /* Only switch on one channel for DP */
 
-#define FONTLOW '0'
-#define FONTHIGH 'Z'
-#define FONTSIZE (FONTHIGH - FONTLOW + 1)
+uint16_t font_get_char(char c);
+uint16_t font_get_digit(uint8_t value);
 
-extern const PROGMEM uint16_t font[FONTSIZE];
+/* main.c */
 
-static inline uint16_t font_get_char(char c)
-{
-	if (c >= FONTLOW && c <= FONTHIGH)
-		return pgm_read_word(font + (c - FONTLOW));
-	else if (c >= 'a' && c <= 'z')
-		return pgm_read_word(font + (c - ('a' - 'A') - FONTLOW));
-	else
-		return 0;
-}
-
-static inline uint16_t font_get_digit(uint8_t value)
-{
-	return pgm_read_word(font + value);
-}
+enum display_mode_e { STATIC, TIME, DATE, TEXT };
+extern volatile enum display_mode_e display_mode;
 
 /* rtc.c */
 
@@ -85,7 +72,6 @@ struct time {
 	uint8_t year, month, day, hour, minute, second;
 };
 
-extern volatile uint8_t update_display_from_rtc;
 extern volatile struct time time;
 extern volatile uint8_t tick;
 
@@ -100,12 +86,17 @@ uint8_t spi_xfer(uint8_t data_out);
 
 /* tlc.c */
 
+extern uint16_t random_number;
+
 extern uint16_t display[4];
 
+extern uint8_t text_line_length;
 extern volatile uint8_t text_line_offset;
-extern char text_line[TEXT_MAX + 3];
+extern char text_line[TEXT_MAX + 8];
 
 void tlc_init();
 void tlc_clear();
+void tlc_show_time();
+void tlc_show_date();
 
 #endif /* BTCLOCK_H_ */

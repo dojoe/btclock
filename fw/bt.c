@@ -7,28 +7,14 @@
 
 #include "btclock.h"
 
-void bt_send(const char *str)
+static void bt_send(const char *str)
 {
-	uart_wait();
-	_delay_ms(10);
-	BTATPORT |= 1 << BTATENABLE;
-	_delay_ms(50);
 	uart_puts(str);
-	uart_wait();
-	BTATPORT &= ~(1 << BTATENABLE);
-	_delay_ms(50);
 }
 
-void bt_send_p(const char *str)
+static void bt_send_p(const char *str)
 {
-	uart_wait();
-	_delay_ms(10);
-	BTATPORT |= 1 << BTATENABLE;
-	_delay_ms(50);
 	uart_puts_p(str);
-	uart_wait();
-	BTATPORT &= ~(1 << BTATENABLE);
-	_delay_ms(50);
 }
 
 #define bt_send_P(str) bt_send_p(PSTR(str))
@@ -47,31 +33,35 @@ void bt_init()
 	_delay_ms(1000);
 
 	/* enable AT mode */
-	//BTATPORT |= 1 << BTATENABLE;
+	BTATPORT |= 1 << BTATENABLE;
 
 	/* set up UART */
 	uart_init(UART_BAUD_SELECT(9600, F_CPU));
 
-	bt_send_P("AT+NAME=\"DoJoe's BT Clock\"\r\n");
+	bt_send_P("AT+NAME=\"BT Clock\"\r\n");
 }
 
-static char setpin[] = "BT+PSWD=XXXX\r\n";
+static char setpin[] = "AT+PSWD=XXXX\r\n";
 
 void bt_new_pin()
 {
+	uint16_t rnd = random_number;
 	for (int i = 0; i < 4; i++)
 	{
-		uint8_t digit = rand() % 10;
+		uint8_t digit = rnd & 0xF;
+		rnd >>= 4;
+		if (digit >= 10)
+			digit -= 10;
 		setpin[8 + i] = digit + '0';
 		display[i] = font_get_digit(digit);
+		display_mode = STATIC;
+		countdown = 30;
 	}
 
-	/* reset BT module again, to be sure we get into AT mode and are not connected */
-	//bt_init();
-
-	uart_puts(setpin);
+	bt_send(setpin);
 }
 
+#if 0
 void bt_led_on()
 {
 	//bt_send(setpin);
@@ -83,7 +73,6 @@ void bt_led_off()
 	bt_send_P("AT+PIO=7,0\r\n");
 }
 
-#if 0
 void bt_poll_gpio()
 {
 	bt_send_P("AT+MPIO?\r\n");

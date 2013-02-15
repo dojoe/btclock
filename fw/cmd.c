@@ -60,7 +60,7 @@ static uint8_t get_time()
 static uint8_t set_sequence()
 {
 	struct sequence_entry tmp_sequence[MAX_SEQUENCE];
-	uint8_t sequence_ptr, cmd_ptr = 2;
+	uint8_t which, sequence_ptr, cmd_ptr = 2;
 
 	memset(tmp_sequence, 0, sizeof(tmp_sequence));
 
@@ -73,9 +73,16 @@ static uint8_t set_sequence()
 			break;
 
 		c = cmd_buf[cmd_ptr++];
-		if (c < '0' || c > '1' + NUM_LINES)
+
+		if (c >= '1' && c < '1' + NUM_LINES)
+			which = c - '1' + 2;
+		else if (c == 'T')
+			which = 0;
+		else if (c == 'D')
+			which = 1;
+		else
 			return 0;
-		tmp_sequence[sequence_ptr].which = c - '0';
+		tmp_sequence[sequence_ptr].which = which;
 
 		while (1)
 		{
@@ -119,7 +126,7 @@ static uint8_t print_digit(uint8_t value, uint8_t divisor)
 
 static uint8_t get_sequence()
 {
-	uint8_t sequence_ptr, value;
+	uint8_t sequence_ptr, value, which;
 
 	for (sequence_ptr = 0; sequence_ptr < MAX_SEQUENCE; sequence_ptr++)
 	{
@@ -131,7 +138,8 @@ static uint8_t get_sequence()
 			else
 				break;
 		}
-		uart_putc(sequence[sequence_ptr].which + '0');
+		which = sequence[sequence_ptr].which;
+		uart_putc(which == 0 ? 'T' : (which == 1 ? 'D' : which - 2 + '1'));
 		value = print_digit(value, 100);
 		value = print_digit(value, 10);
 		uart_putc(value + '0');
@@ -184,6 +192,12 @@ void cmd_poll()
 			return;
 		if (c == '\n')
 		{
+			/*
+			memcpy(text_line, cmd_buf, cmd_buf_ptr);
+			text_line[cmd_buf_ptr] = 0;
+			countdown = 30;
+			display_mode = TEXT;
+			*/
 			/* filter out empty commands and "OK" responses from BT module */
 			if (cmd_buf_ptr &&
 					!(cmd_buf_ptr == 2 && cmd_buf[0] == 'O' && cmd_buf[1] == 'K'))

@@ -9,24 +9,17 @@
 #include <avr/sleep.h>
 
 /* TODO:
- *   - proper button reaction
  *   - scrolling with fullstops in text
  *   - switchover between clock and text
  *   - text <= 4 chars
  *   - dark times
  */
 
+volatile enum display_mode_e display_mode;
+
 uint8_t poll_button()
 {
-	/* If we're transmitting something, wait until done. */
-	uart_wait();
-	_delay_ms(10);
-	BTATPORT |= _BV(BTATENABLE);
-	BTATDDR &= ~_BV(BTATENABLE);
 	uint8_t retval = BUTTONPIN & _BV(BUTTON);
-	BTATPORT &= ~_BV(BTATENABLE);
-	BTATDDR |= _BV(BTATENABLE);
-	_delay_ms(50);
 	return retval;
 }
 

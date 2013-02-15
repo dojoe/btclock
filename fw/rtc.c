@@ -41,15 +41,13 @@ ISR(INT0_vect)
 	RTC_END();
 
 	/* if time display enabled, set display from BCD time */
-	if (update_display_from_rtc)
+	if (TIME == display_mode)
 	{
-		display[0] = font_get_digit(hour >> 4);
-		uint16_t seg1 = font_get_digit(hour & 0xF);
-		if (second & 1)
-			seg1 |= DP;
-		display[1] = seg1;
-		display[2] = font_get_digit(minute >> 4);
-		display[3] = font_get_digit(minute & 0xF);
+		tlc_show_time();
+	}
+	else if (DATE == display_mode)
+	{
+		tlc_show_date();
 	}
 
 	tick = 1;
