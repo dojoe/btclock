@@ -154,9 +154,6 @@ extern void uart_putc(unsigned char data);
  */
 extern void uart_puts(const char *s );
 
-extern void uart_wait();
-
-
 /**
  * @brief    Put string from program memory to ringbuffer for transmitting via UART.
  *

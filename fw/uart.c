@@ -313,14 +313,6 @@ Purpose:  called when the UART is ready to transmit the next byte
     }
 }
 
-volatile unsigned char tx_active;
-
-ISR (UART0_TRANSMIT_DONE_INTERRUPT)
-{
-	tx_active = 0;
-	UART0_CONTROL &= ~_BV(TXCIE);
-}
-
 
 /*************************************************************************
 Function: uart_init()
@@ -334,7 +326,6 @@ void uart_init(unsigned int baudrate)
     UART_TxTail = 0;
     UART_RxHead = 0;
     UART_RxTail = 0;
-    tx_active = 0;
     
 #if defined( AT90_UART )
     /* set baud rate */
@@ -448,20 +439,13 @@ void uart_putc(unsigned char data)
         ;/* wait for free space in buffer */
     }
     
-    tx_active = 1;
     UART_TxBuf[tmphead] = data;
     UART_TxHead = tmphead;
 
     /* enable UDRE interrupt */
-    UART0_CONTROL    |= _BV(UART0_UDRIE)|_BV(TXCIE);
+    UART0_CONTROL    |= _BV(UART0_UDRIE);
 
 }/* uart_putc */
-
-
-void uart_wait()
-{
-	while (tx_active);
-}
 
 
 /*************************************************************************

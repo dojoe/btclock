@@ -41,10 +41,12 @@ void bt_init()
 	bt_send_P("AT+NAME=\"BT Clock\"\r\n");
 }
 
-static char setpin[] = "AT+PSWD=XXXX\r\n";
+static const PROGMEM char setpin_tmpl[] = "AT+PSWD=XXXX\r\n";
 
 void bt_new_pin()
 {
+	char setpin[sizeof(setpin_tmpl)];
+	memcpy_P(setpin, setpin_tmpl, sizeof(setpin_tmpl));
 	uint16_t rnd = random_number;
 	for (int i = 0; i < 4; i++)
 	{

@@ -7,7 +7,6 @@
 
 #include "btclock.h"
 
-volatile uint8_t update_display_from_rtc;
 volatile struct time time;
 volatile uint8_t tick;
 
