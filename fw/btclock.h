@@ -86,6 +86,9 @@ uint8_t spi_xfer(uint8_t data_out);
 
 /* tlc.c */
 
+extern uint16_t blank_time_start;
+extern uint16_t blank_time_end;
+
 extern uint16_t random_number;
 
 extern uint16_t display[4];

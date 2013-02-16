@@ -7,6 +7,8 @@
 
 #include "btclock.h"
 
+uint16_t blank_time_start, blank_time_end;
+
 uint16_t random_number = 0xACE1;
 
 uint16_t display[4];
@@ -16,30 +18,54 @@ volatile uint8_t text_line_offset;
 uint8_t text_line_length;
 char text_line[TEXT_MAX + 8];
 
+static uint8_t is_blank()
+{
+	uint16_t cur_time = time.hour << 8 | time.minute;
+	uint8_t after_start = (cur_time >= blank_time_start);
+	uint8_t before_end  = (cur_time < blank_time_end);
+	if (blank_time_start <= blank_time_end)
+	{
+		return after_start && before_end;
+	}
+	else
+	{
+		return after_start || before_end;
+	}
+}
+
 ISR(TIMER0_COMPA_vect)
 {
-	/* prepare new values for TLC register and segment enables */
-	uint8_t cur_segment = int_counter & 3;
-	uint16_t bits = display[cur_segment];
 	uint8_t segport_clear = SEGPORT | SEGMASK;
-	uint8_t new_segport = (segport_clear & ~SEGMASK) | (~((8 << SEGBASE) >> cur_segment) & SEGMASK);
 
-	/* Clear the segment drivers early to account for slow recovery time */
-	SEGPORT = segport_clear;
+	if (is_blank())
+	{
+		LATCHPORT |= 1 << BLANK;
+		SEGPORT = segport_clear;
+	}
+	else
+	{
+		/* prepare new values for TLC register and segment enables */
+		uint8_t cur_segment = int_counter & 3;
+		uint16_t bits = display[cur_segment];
+		uint8_t new_segport = (segport_clear & ~SEGMASK) | (~((8 << SEGBASE) >> cur_segment) & SEGMASK);
 
-	/* shift new value into TLC */
-	spi_xfer(bits >> 8);
-	spi_xfer(bits & 0xFF);
+		/* Clear the segment drivers early to account for slow recovery time */
+		SEGPORT = segport_clear;
 
-	/* blank, latch, switch segment, unblank */
-	LATCHPORT |= 1 << BLANK;
-	LATCHPORT |= 1 << LATCH;
-	SEGPORT = new_segport;
-	/* Resetting the bits in two lines generates two instructions (cbi, cbi),
-	 * whereas doing it in one line generates three: in, andi, out
-	 */
-	LATCHPORT &= ~(1 << LATCH);
-	LATCHPORT &= ~(1 << BLANK);
+		/* shift new value into TLC */
+		spi_xfer(bits >> 8);
+		spi_xfer(bits & 0xFF);
+
+		/* blank, latch, switch segment, unblank */
+		LATCHPORT |= 1 << BLANK;
+		LATCHPORT |= 1 << LATCH;
+		SEGPORT = new_segport;
+		/* Resetting the bits in two lines generates two instructions (cbi, cbi),
+		 * whereas doing it in one line generates three: in, andi, out
+		 */
+		LATCHPORT &= ~(1 << LATCH);
+		LATCHPORT &= ~(1 << BLANK);
+	}
 
 	/* next time, next segment */
 	int_counter++;
@@ -101,7 +127,6 @@ void tlc_init()
 
 void tlc_clear()
 {
-//	display[0] = display[1] = display[2] = display[3] = 0;
 	memset(display, 0, sizeof(display));
 }
 

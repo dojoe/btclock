@@ -10,9 +10,7 @@
 
 /* TODO:
  *   - scrolling with fullstops in text
- *   - switchover between clock and text
- *   - text <= 4 chars
- *   - dark times
+ *   - alternate scroll mode
  */
 
 volatile enum display_mode_e display_mode;

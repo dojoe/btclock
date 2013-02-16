@@ -110,7 +110,9 @@
 							<tool id="de.innot.avreclipse.tool.objdump.winavr.app.release.50321041" name="AVR Create Extended Listing" superClass="de.innot.avreclipse.tool.objdump.winavr.app.release"/>
 							<tool id="de.innot.avreclipse.tool.objcopy.flash.winavr.app.release.976495110" name="AVR Create Flash image" superClass="de.innot.avreclipse.tool.objcopy.flash.winavr.app.release"/>
 							<tool id="de.innot.avreclipse.tool.objcopy.eeprom.winavr.app.release.377379503" name="AVR Create EEPROM image" superClass="de.innot.avreclipse.tool.objcopy.eeprom.winavr.app.release"/>
-							<tool id="de.innot.avreclipse.tool.size.winavr.app.release.921774739" name="Print Size" superClass="de.innot.avreclipse.tool.size.winavr.app.release"/>
+							<tool commandLinePattern="${COMMAND} ${FLAGS} ${INPUTS} -C" id="de.innot.avreclipse.tool.size.winavr.app.release.921774739" name="Print Size" superClass="de.innot.avreclipse.tool.size.winavr.app.release">
+								<option id="de.innot.avreclipse.size.option.format.289116062" name="Size Format" superClass="de.innot.avreclipse.size.option.format" value="de.innot.avreclipse.size.option.format.berkeley" valueType="enumerated"/>
+							</tool>
 							<tool id="de.innot.avreclipse.tool.avrdude.app.release.1447056680" name="AVRDude" superClass="de.innot.avreclipse.tool.avrdude.app.release"/>
 						</toolChain>
 					</folderInfo>

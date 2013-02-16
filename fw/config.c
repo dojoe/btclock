@@ -9,9 +9,10 @@
 #include <avr/eeprom.h>
 
 static EEMEM struct {
+	uint16_t blank_time_start, blank_time_end;
 	struct sequence_entry sequence[MAX_SEQUENCE];
 	char lines[TEXT_MAX][NUM_LINES];
-} config = {{{0}}};
+} config = {0};
 
 struct sequence_entry sequence[MAX_SEQUENCE];
 uint8_t countdown;
@@ -21,6 +22,8 @@ static uint8_t sequence_ptr;
 void config_init()
 {
 	eeprom_read_block(sequence, config.sequence, sizeof(config.sequence));
+	blank_time_start = eeprom_read_word(&config.blank_time_start);
+	blank_time_end = eeprom_read_word(&config.blank_time_end);
 	memset(text_line, 0, sizeof(text_line));
 	sequence_ptr = 0;
 	next_line();
