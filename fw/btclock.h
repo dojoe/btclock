@@ -53,6 +53,7 @@ void save_sequence();
 void next_line();
 void set_line(uint8_t index, char *buf, uint8_t length);
 void get_line(uint8_t index, char *buf);
+void save_blank_times();
 
 /* font.c */
 

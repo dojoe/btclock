@@ -75,3 +75,9 @@ void get_line(uint8_t index, char *buf)
 {
 	eeprom_read_block(buf, config.lines[index], TEXT_MAX);
 }
+
+void save_blank_times()
+{
+	eeprom_write_word(&config.blank_time_start, blank_time_start);
+	eeprom_write_word(&config.blank_time_end, blank_time_end);
+}

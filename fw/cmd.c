@@ -10,22 +10,29 @@
 static char cmd_buf[TEXT_MAX + 2]; /* for "N=<up to TEXT_MAX chars>" */
 static uint8_t cmd_buf_ptr = 0;
 
-static uint8_t set_time()
+static uint8_t parse_bcd(char *text, uint8_t *data, uint8_t size)
 {
-	uint8_t i, data[6];
-
-	if (cmd_buf_ptr != 14)
-		return 0;
-
-	for (i = 0; i < 6; i++)
+	while (size--)
 	{
-		char *text = cmd_buf + 2 + (2 * i);
 		if (text[0] < '0' || text[0] > '9' || text[1] < '0' || text[1] > '9')
 		{
 			return 0;
 		}
-		data[i] = ((text[0] - '0') << 4) | (text[1] - '0');
+		*data++ = ((text[0] - '0') << 4) | (text[1] - '0');
+		text += 2;
 	}
+	return 1;
+}
+
+static uint8_t set_time()
+{
+	uint8_t data[6];
+
+	if (cmd_buf_ptr != 14)
+		return 0;
+
+	if (!parse_bcd(cmd_buf + 2, data, 6))
+		return 0;
 
 	if (data[1] > 0x12 || data[2] > 0x31 || data[3] > 0x23 || data[4] > 0x59 || data[5] > 0x59)
 	{
@@ -37,10 +44,15 @@ static uint8_t set_time()
 	return 1;
 }
 
-static void print_bcd(uint8_t value, char extra_char)
+static void print_bcd(uint8_t value)
 {
 	uart_putc('0' + (value >> 4));
 	uart_putc('0' + (value & 0xF));
+}
+
+static void print_bcd_plus_char(uint8_t value, char extra_char)
+{
+	print_bcd(value);
 	uart_putc(extra_char);
 }
 
@@ -48,12 +60,12 @@ static uint8_t get_time()
 {
 	uart_putc('2');
 	uart_putc('0');
-	print_bcd(time.year, '-');
-	print_bcd(time.month, '-');
-	print_bcd(time.day, ' ');
-	print_bcd(time.hour, ':');
-	print_bcd(time.minute, ':');
-	print_bcd(time.second, '\n');
+	print_bcd_plus_char(time.year, '-');
+	print_bcd_plus_char(time.month, '-');
+	print_bcd_plus_char(time.day, ' ');
+	print_bcd_plus_char(time.hour, ':');
+	print_bcd_plus_char(time.minute, ':');
+	print_bcd_plus_char(time.second, '\n');
 	return 1;
 }
 
@@ -149,6 +161,43 @@ static uint8_t get_sequence()
 	return 1;
 }
 
+static uint8_t set_blank_times()
+{
+	uint16_t start, end;
+	uint8_t b[2];
+
+	if (cmd_buf_ptr < 11 || cmd_buf[6] != '-')
+		return 0;
+
+	if (!parse_bcd(cmd_buf + 2, b, 2))
+		return 0;
+
+	start = b[0] << 8 | b[1];
+
+	if (!parse_bcd(cmd_buf + 7, b, 2))
+		return 0;
+
+	end = b[0] << 8 | b[1];
+
+	if (start > 0x2359 || end > 0x2359)
+		return 0;
+
+	blank_time_start = start;
+	blank_time_end = end;
+	save_blank_times();
+
+	return 1;
+}
+
+static uint8_t get_blank_times()
+{
+	print_bcd(blank_time_start >> 8);
+	print_bcd_plus_char(blank_time_start & 0xFF, '-');
+	print_bcd(blank_time_end >> 8);
+	print_bcd_plus_char(blank_time_end & 0xFF, '\n');
+	return 1;
+}
+
 static uint8_t cmd_parse()
 {
 	char type = cmd_buf[0], op = cmd_buf[1];
@@ -161,6 +210,8 @@ static uint8_t cmd_parse()
 		return set ? set_time() : get_time();
 	else if (type == 'S')
 		return set ? set_sequence() : get_sequence();
+	else if (type == 'B')
+		return set ? set_blank_times() : get_blank_times();
 	else if (type >= '1' && type <= '0' + NUM_LINES)
 	{
 		type -= '1';
