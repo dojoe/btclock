@@ -18,6 +18,8 @@ volatile uint8_t tick;
 #define RTC_BEGIN() { cli(); RTCCEPORT |= 1 << RTCCE; }
 #define RTC_END() { RTCCEPORT &= ~(1 << RTCCE); sei(); }
 
+static const PROGMEM char jocki[] = "Jocki hat Geburtstag";
+
 ISR(INT0_vect)
 {
 	uint8_t hour, minute, second;
@@ -39,8 +41,16 @@ ISR(INT0_vect)
 	}
 	RTC_END();
 
-	/* if time display enabled, set display from BCD time */
-	if (TIME == display_mode)
+	if (!minute && !second && 0x03 == time.month && 0x19 == time.day)
+	{
+		memset(text_line, 0, sizeof(text_line));
+		memcpy_P(text_line + 3, jocki, sizeof(jocki));
+		text_line_length = strlen(text_line + 3);
+		text_line_offset = 0;
+		display_mode = TEXT;
+		countdown = 60;
+	}
+	else if (TIME == display_mode)
 	{
 		tlc_show_time();
 	}
