@@ -50,7 +50,7 @@ static const PROGMEM uint16_t font[FONTSIZE] = {
 		/* : */ 0,
 		/* ; */ 0,
 		/* < */ a | d | e | f,
-		/* = */ 0,
+		/* = */ g,
 		/* > */ 0,
 		/* ? */ 0,
 		/* @ */ a | b | f | g,

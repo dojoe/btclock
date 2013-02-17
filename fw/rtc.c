@@ -47,7 +47,7 @@ ISR(INT0_vect)
 		memcpy_P(text_line + 3, jocki, sizeof(jocki));
 		text_line_length = strlen(text_line + 3);
 		text_line_offset = 0;
-		display_mode = TEXT;
+		display_mode = TEXT_2;
 		countdown = 60;
 	}
 	else if (TIME == display_mode)

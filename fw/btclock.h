@@ -51,7 +51,7 @@ extern uint8_t countdown;
 void config_init();
 void save_sequence();
 void next_line();
-void set_line(uint8_t index, char *buf, uint8_t length);
+void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode);
 void get_line(uint8_t index, char *buf);
 void save_blank_times();
 
@@ -64,7 +64,7 @@ uint16_t font_get_digit(uint8_t value);
 
 /* main.c */
 
-enum display_mode_e { STATIC, TIME, DATE, TEXT };
+enum display_mode_e { STATIC, TIME, DATE, TEXT_1, TEXT_2 };
 extern volatile enum display_mode_e display_mode;
 
 /* rtc.c */

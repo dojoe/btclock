@@ -78,20 +78,18 @@ ISR(TIMER0_COMPA_vect)
 		random_number = random_number >> 1 | rand_low << 15;
 	}
 
-	if ((0 == (int_counter & 0x7F)) && (TEXT == display_mode))
+	if ((0 == (int_counter & 0x7F)) && (TEXT_1 == display_mode || TEXT_2 == display_mode))
 	{
 		uint8_t offset, i;
 		if (text_line_length > 4)
 		{
 			offset = text_line_offset++;
-			if (offset >= text_line_length + 3)
-			{
+			if (offset >= text_line_length + 2)
 				text_line_offset = 0;
+
+			if ((offset < 3) && (TEXT_1 == display_mode))
 				offset = 3;
-			}
-			else if (offset < 3)
-				offset = 3;
-			else if (offset >= text_line_length)
+			else if ((offset >= text_line_length) && (TEXT_1 == display_mode))
 				offset = text_line_length - 1;
 		}
 		else

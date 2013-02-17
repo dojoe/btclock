@@ -217,9 +217,11 @@ static uint8_t cmd_parse()
 		type -= '1';
 		if (set)
 		{
+			uint8_t mode;
 			if (cmd_buf_ptr - 2 > TEXT_MAX - 1)
 				return 0;
-			set_line(type, cmd_buf + 2, cmd_buf_ptr - 2);
+			mode = '!' == cmd_buf[2] ? 1 : 0;
+			set_line(type, cmd_buf + 2 + mode, cmd_buf_ptr - 2 - mode, mode);
 		}
 		else
 		{

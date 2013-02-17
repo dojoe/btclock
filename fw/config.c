@@ -12,6 +12,7 @@ static EEMEM struct {
 	uint16_t blank_time_start, blank_time_end;
 	struct sequence_entry sequence[MAX_SEQUENCE];
 	char lines[TEXT_MAX][NUM_LINES];
+	uint8_t line_modes[NUM_LINES];
 } config = {0};
 
 struct sequence_entry sequence[MAX_SEQUENCE];
@@ -50,7 +51,7 @@ void next_line()
 		eeprom_read_block(text_line + 3, config.lines[which - 2], TEXT_MAX);
 		text_line_offset = 0;
 		text_line_length = strlen(text_line + 3);
-		display_mode = TEXT;
+		display_mode = eeprom_read_byte(&config.line_modes[which - 2]) ? TEXT_2 : TEXT_1;
 	}
 
 	sequence_ptr++;
@@ -65,10 +66,11 @@ void save_sequence()
 	countdown = 0;
 }
 
-void set_line(uint8_t index, char *buf, uint8_t length)
+void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode)
 {
 	memset(buf + length, 0, TEXT_MAX - length);
 	eeprom_write_block(buf, config.lines[index], TEXT_MAX);
+	eeprom_write_byte(&config.line_modes[index], mode);
 }
 
 void get_line(uint8_t index, char *buf)
