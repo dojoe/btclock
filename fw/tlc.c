@@ -7,7 +7,7 @@
 
 #include "btclock.h"
 
-uint16_t blank_time_start, blank_time_end;
+struct timespan blank_time;
 
 uint16_t random_number = 0xACE1;
 
@@ -18,26 +18,11 @@ volatile uint8_t text_line_offset;
 uint8_t text_line_length;
 char text_line[TEXT_MAX + 8];
 
-static uint8_t is_blank()
-{
-	uint16_t cur_time = time.hour << 8 | time.minute;
-	uint8_t after_start = (cur_time >= blank_time_start);
-	uint8_t before_end  = (cur_time < blank_time_end);
-	if (blank_time_start <= blank_time_end)
-	{
-		return after_start && before_end;
-	}
-	else
-	{
-		return after_start || before_end;
-	}
-}
-
 ISR(TIMER0_COMPA_vect)
 {
 	uint8_t segport_clear = SEGPORT | SEGMASK;
 
-	if (is_blank())
+	if (in_timespan(blank_time))
 	{
 		LATCHPORT |= 1 << BLANK;
 		SEGPORT = segport_clear;

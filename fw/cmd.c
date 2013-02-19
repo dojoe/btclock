@@ -161,20 +161,20 @@ static uint8_t get_sequence()
 	return 1;
 }
 
-static uint8_t set_blank_times()
+static uint8_t parse_timespan(char *text, uint8_t len, struct timespan *span)
 {
 	uint16_t start, end;
 	uint8_t b[2];
 
-	if (cmd_buf_ptr < 11 || cmd_buf[6] != '-')
+	if (len < 9 || text[4] != '-')
 		return 0;
 
-	if (!parse_bcd(cmd_buf + 2, b, 2))
+	if (!parse_bcd(text, b, 2))
 		return 0;
 
 	start = b[0] << 8 | b[1];
 
-	if (!parse_bcd(cmd_buf + 7, b, 2))
+	if (!parse_bcd(text + 5, b, 2))
 		return 0;
 
 	end = b[0] << 8 | b[1];
@@ -182,19 +182,31 @@ static uint8_t set_blank_times()
 	if (start > 0x2359 || end > 0x2359)
 		return 0;
 
-	blank_time_start = start;
-	blank_time_end = end;
-	save_blank_times();
-
+	span->start = start;
+	span->end = end;
 	return 1;
+}
+
+static uint8_t set_blank_times()
+{
+	if (!parse_timespan(cmd_buf + 2, cmd_buf_ptr - 2, &blank_time))
+		return 0;
+
+	save_blank_times();
+	return 1;
+}
+
+static void print_timespan(struct timespan span)
+{
+	print_bcd(span.start >> 8);
+	print_bcd_plus_char(span.start & 0xFF, '-');
+	print_bcd(span.end >> 8);
+	print_bcd_plus_char(span.end & 0xFF, '\n');
 }
 
 static uint8_t get_blank_times()
 {
-	print_bcd(blank_time_start >> 8);
-	print_bcd_plus_char(blank_time_start & 0xFF, '-');
-	print_bcd(blank_time_end >> 8);
-	print_bcd_plus_char(blank_time_end & 0xFF, '\n');
+	print_timespan(blank_time);
 	return 1;
 }
 

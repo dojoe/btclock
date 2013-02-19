@@ -9,13 +9,14 @@
 #include <avr/eeprom.h>
 
 static EEMEM struct {
-	uint16_t blank_time_start, blank_time_end;
+	struct timespan blank_time;
 	struct sequence_entry sequence[MAX_SEQUENCE];
 	char lines[TEXT_MAX][NUM_LINES];
-	uint8_t line_modes[NUM_LINES];
-} config = {0};
+	uint8_t line_modes;
+} config = {{0}};
 
 struct sequence_entry sequence[MAX_SEQUENCE];
+
 uint8_t countdown;
 
 static uint8_t sequence_ptr;
@@ -23,18 +24,14 @@ static uint8_t sequence_ptr;
 void config_init()
 {
 	eeprom_read_block(sequence, config.sequence, sizeof(config.sequence));
-	blank_time_start = eeprom_read_word(&config.blank_time_start);
-	blank_time_end = eeprom_read_word(&config.blank_time_end);
+	eeprom_read_block(&blank_time, &config.blank_time, sizeof(config.blank_time));
 	memset(text_line, 0, sizeof(text_line));
 	sequence_ptr = 0;
 	next_line();
 }
 
-void next_line()
+static void set_display(uint8_t which)
 {
-	uint8_t which = sequence[sequence_ptr].which;
-	countdown = sequence[sequence_ptr].duration;
-
 	if (0 == which)
 	{
 		display_mode = TIME;
@@ -47,12 +44,21 @@ void next_line()
 	}
 	else
 	{
+		which -= 2;
 		display_mode = STATIC;
-		eeprom_read_block(text_line + 3, config.lines[which - 2], TEXT_MAX);
+		eeprom_read_block(text_line + 3, config.lines[which], TEXT_MAX);
 		text_line_offset = 0;
 		text_line_length = strlen(text_line + 3);
-		display_mode = eeprom_read_byte(&config.line_modes[which - 2]) ? TEXT_2 : TEXT_1;
+		display_mode = (eeprom_read_byte(&config.line_modes) & (1 << which)) ? TEXT_2 : TEXT_1;
 	}
+}
+
+void next_line()
+{
+	uint8_t which = sequence[sequence_ptr].which;
+	countdown = sequence[sequence_ptr].duration;
+
+	set_display(which);
 
 	sequence_ptr++;
 	if (MAX_SEQUENCE == sequence_ptr || 0 == sequence[sequence_ptr].duration)
@@ -68,9 +74,17 @@ void save_sequence()
 
 void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode)
 {
+	uint8_t line_modes, mode_mask;
+
 	memset(buf + length, 0, TEXT_MAX - length);
 	eeprom_write_block(buf, config.lines[index], TEXT_MAX);
-	eeprom_write_byte(&config.line_modes[index], mode);
+	line_modes = eeprom_read_byte(&config.line_modes);
+	mode_mask = 1 << index;
+	if (mode)
+		line_modes |= mode_mask;
+	else
+		line_modes &= ~mode_mask;
+	eeprom_write_byte(&config.line_modes, line_modes);
 }
 
 void get_line(uint8_t index, char *buf)
@@ -80,6 +94,5 @@ void get_line(uint8_t index, char *buf)
 
 void save_blank_times()
 {
-	eeprom_write_word(&config.blank_time_start, blank_time_start);
-	eeprom_write_word(&config.blank_time_end, blank_time_end);
+	eeprom_write_block(&blank_time, &config.blank_time, sizeof(config.blank_time));
 }

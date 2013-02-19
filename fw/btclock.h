@@ -37,8 +37,8 @@ void cmd_poll();
 /* config.c */
 
 #define MAX_SEQUENCE 8
-#define NUM_LINES 4
-#define TEXT_MAX 50
+#define NUM_LINES 5
+#define TEXT_MAX 45
 
 struct sequence_entry {
 	uint8_t which;    /* 0 = time, 1..NUM_LINES = text */
@@ -64,8 +64,14 @@ uint16_t font_get_digit(uint8_t value);
 
 /* main.c */
 
+struct timespan {
+	uint16_t start, end;
+};
+
 enum display_mode_e { STATIC, TIME, DATE, TEXT_1, TEXT_2 };
 extern volatile enum display_mode_e display_mode;
+
+uint8_t in_timespan(struct timespan span);
 
 /* rtc.c */
 
@@ -87,8 +93,7 @@ uint8_t spi_xfer(uint8_t data_out);
 
 /* tlc.c */
 
-extern uint16_t blank_time_start;
-extern uint16_t blank_time_end;
+extern struct timespan blank_time;
 
 extern uint16_t random_number;
 

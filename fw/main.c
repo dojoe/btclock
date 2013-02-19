@@ -15,6 +15,21 @@
 
 volatile enum display_mode_e display_mode;
 
+uint8_t in_timespan(struct timespan span)
+{
+	uint16_t cur_time = time.hour << 8 | time.minute;
+	uint8_t after_start = (cur_time >= span.start);
+	uint8_t before_end  = (cur_time < span.end);
+	if (span.start <= span.end)
+	{
+		return after_start && before_end;
+	}
+	else
+	{
+		return after_start || before_end;
+	}
+}
+
 uint8_t poll_button()
 {
 	uint8_t retval = BUTTONPIN & _BV(BUTTON);
