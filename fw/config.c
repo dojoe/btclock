@@ -17,7 +17,7 @@ static EEMEM struct {
 		};
 	};
 	struct sequence_entry sequence[MAX_SEQUENCE];
-	char lines[TEXT_MAX][NUM_LINES];
+	char lines[NUM_LINES][TEXT_MAX];
 } config = { .sequence = {{ SEQ_TIME, 1}}};
 
 struct sequence_entry sequence[MAX_SEQUENCE];
@@ -92,13 +92,14 @@ void check_timespans()
 {
 	uint8_t i = NUM_SPECIALS;
 	blank = in_timespan(&config.blank_time);
-	while (i--)
+	while (i)
 	{
-		if (in_timespan(&config.specials[i + 1].when))
+		if (in_timespan(&config.specials[i].when))
 		{
 			set_display(eeprom_read_byte(&config.specials[i].what));
 			countdown = 60; // so we get a normal update the next minute _if_ we're not still in the timespan
 		}
+		i--;
 	}
 }
 

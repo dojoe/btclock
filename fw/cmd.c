@@ -199,7 +199,7 @@ static uint8_t set_special(uint8_t index)
 	{
 		if (cmd_buf_ptr < 13 || cmd_buf[11] != ',' || cmd_buf[12] < '1' || cmd_buf[12] > '0' + NUM_LINES)
 			return 0;
-		what = cmd_buf[12] - '0';
+		what = cmd_buf[12] - '1';
 	}
 
 	set_special_time(index, &when, what);
