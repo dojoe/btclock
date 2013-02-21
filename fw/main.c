@@ -10,25 +10,9 @@
 
 /* TODO:
  *   - scrolling with fullstops in text
- *   - alternate scroll mode
  */
 
 volatile enum display_mode_e display_mode;
-
-uint8_t in_timespan(struct timespan span)
-{
-	uint16_t cur_time = time.hour << 8 | time.minute;
-	uint8_t after_start = (cur_time >= span.start);
-	uint8_t before_end  = (cur_time < span.end);
-	if (span.start <= span.end)
-	{
-		return after_start && before_end;
-	}
-	else
-	{
-		return after_start || before_end;
-	}
-}
 
 uint8_t poll_button()
 {
@@ -46,8 +30,8 @@ int main(void)
 	DDRD = DDRD_INIT;
 
 	sei();
-	config_init();
 	rtc_init();
+	config_init();
 	tlc_init();
 	bt_init();
 
@@ -57,6 +41,9 @@ int main(void)
 		if (tick)  /* happens once every second */
 		{
 			tick = 0;
+
+			if (0 == time.second)
+				check_timespans();
 
 			if (0 == countdown)
 				next_line();

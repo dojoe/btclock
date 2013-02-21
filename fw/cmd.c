@@ -87,11 +87,11 @@ static uint8_t set_sequence()
 		c = cmd_buf[cmd_ptr++];
 
 		if (c >= '1' && c < '1' + NUM_LINES)
-			which = c - '1' + 2;
+			which = c - '1';
 		else if (c == 'T')
-			which = 0;
+			which = SEQ_TIME;
 		else if (c == 'D')
-			which = 1;
+			which = SEQ_DATE;
 		else
 			return 0;
 		tmp_sequence[sequence_ptr].which = which;
@@ -151,7 +151,7 @@ static uint8_t get_sequence()
 				break;
 		}
 		which = sequence[sequence_ptr].which;
-		uart_putc(which == 0 ? 'T' : (which == 1 ? 'D' : which - 2 + '1'));
+		uart_putc(which == SEQ_TIME ? 'T' : (which == SEQ_DATE ? 'D' : which + '1'));
 		value = print_digit(value, 100);
 		value = print_digit(value, 10);
 		uart_putc(value + '0');
@@ -187,26 +187,39 @@ static uint8_t parse_timespan(char *text, uint8_t len, struct timespan *span)
 	return 1;
 }
 
-static uint8_t set_blank_times()
+static uint8_t set_special(uint8_t index)
 {
-	if (!parse_timespan(cmd_buf + 2, cmd_buf_ptr - 2, &blank_time))
+	struct timespan when;
+	uint8_t what = 0;
+
+	if (!parse_timespan(cmd_buf + 2, cmd_buf_ptr - 2, &when))
 		return 0;
 
-	save_blank_times();
+	if (index)
+	{
+		if (cmd_buf_ptr < 13 || cmd_buf[11] != ',' || cmd_buf[12] < '1' || cmd_buf[12] > '0' + NUM_LINES)
+			return 0;
+		what = cmd_buf[12] - '0';
+	}
+
+	set_special_time(index, &when, what);
 	return 1;
 }
 
-static void print_timespan(struct timespan span)
+static uint8_t get_special(uint8_t index)
 {
+	struct timespan span;
+	uint8_t which = get_special_time(index, &span);
 	print_bcd(span.start >> 8);
 	print_bcd_plus_char(span.start & 0xFF, '-');
 	print_bcd(span.end >> 8);
-	print_bcd_plus_char(span.end & 0xFF, '\n');
-}
-
-static uint8_t get_blank_times()
-{
-	print_timespan(blank_time);
+	print_bcd(span.end & 0xFF);
+	if (index)
+	{
+		uart_putc(',');
+		uart_putc('1' + which);
+	}
+	uart_putc('\n');
 	return 1;
 }
 
@@ -222,8 +235,11 @@ static uint8_t cmd_parse()
 		return set ? set_time() : get_time();
 	else if (type == 'S')
 		return set ? set_sequence() : get_sequence();
-	else if (type == 'B')
-		return set ? set_blank_times() : get_blank_times();
+	else if (type >= 'B' && type <= 'B' + NUM_SPECIALS)
+	{
+		uint8_t index = type - 'B';
+		return set ? set_special(index) : get_special(index);
+	}
 	else if (type >= '1' && type <= '0' + NUM_LINES)
 	{
 		type -= '1';
@@ -257,12 +273,6 @@ void cmd_poll()
 			return;
 		if (c == '\n')
 		{
-			/*
-			memcpy(text_line, cmd_buf, cmd_buf_ptr);
-			text_line[cmd_buf_ptr] = 0;
-			countdown = 30;
-			display_mode = TEXT;
-			*/
 			/* filter out empty commands and "OK" responses from BT module */
 			if (cmd_buf_ptr &&
 					!(cmd_buf_ptr == 2 && cmd_buf[0] == 'O' && cmd_buf[1] == 'K'))

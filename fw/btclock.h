@@ -36,13 +36,27 @@ void cmd_poll();
 
 /* config.c */
 
+#define NUM_SPECIALS 2
 #define MAX_SEQUENCE 8
 #define NUM_LINES 5
 #define TEXT_MAX 45
 
+#define SEQ_TIME 255
+#define SEQ_DATE 254
+#define SEQ_NOTHING 253
+
 struct sequence_entry {
-	uint8_t which;    /* 0 = time, 1..NUM_LINES = text */
+	uint8_t which;    /* SEQ_TIME = time, SEQ_DATE = date, 0..NUM_LINES-1 = text */
 	uint8_t duration; /* in seconds, 0 = skip */
+};
+
+struct timespan {
+	uint16_t start, end;
+};
+
+struct special {
+	struct timespan when;
+	uint8_t what;
 };
 
 extern struct sequence_entry sequence[MAX_SEQUENCE];
@@ -51,9 +65,11 @@ extern uint8_t countdown;
 void config_init();
 void save_sequence();
 void next_line();
+void check_timespans();
 void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode);
 void get_line(uint8_t index, char *buf);
-void save_blank_times();
+void set_special_time(uint8_t index, struct timespan *span, uint8_t what);
+uint8_t get_special_time(uint8_t index, struct timespan *span);
 
 /* font.c */
 
@@ -64,14 +80,8 @@ uint16_t font_get_digit(uint8_t value);
 
 /* main.c */
 
-struct timespan {
-	uint16_t start, end;
-};
-
 enum display_mode_e { STATIC, TIME, DATE, TEXT_1, TEXT_2 };
 extern volatile enum display_mode_e display_mode;
-
-uint8_t in_timespan(struct timespan span);
 
 /* rtc.c */
 
@@ -93,7 +103,7 @@ uint8_t spi_xfer(uint8_t data_out);
 
 /* tlc.c */
 
-extern struct timespan blank_time;
+extern uint8_t  blank;
 
 extern uint16_t random_number;
 
@@ -104,7 +114,6 @@ extern volatile uint8_t text_line_offset;
 extern char text_line[TEXT_MAX + 8];
 
 void tlc_init();
-void tlc_clear();
 void tlc_show_time();
 void tlc_show_date();
 

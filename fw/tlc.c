@@ -7,12 +7,12 @@
 
 #include "btclock.h"
 
-struct timespan blank_time;
-
 uint16_t random_number = 0xACE1;
 
 uint16_t display[4];
 static uint8_t int_counter;
+
+uint8_t blank;
 
 volatile uint8_t text_line_offset;
 uint8_t text_line_length;
@@ -22,7 +22,7 @@ ISR(TIMER0_COMPA_vect)
 {
 	uint8_t segport_clear = SEGPORT | SEGMASK;
 
-	if (in_timespan(blank_time))
+	if (blank)
 	{
 		LATCHPORT |= 1 << BLANK;
 		SEGPORT = segport_clear;
@@ -95,9 +95,6 @@ ISR(TIMER0_COMPA_vect)
 
 void tlc_init()
 {
-	int_counter = 0;
-	tlc_clear();
-
 	/* Set up T/C 0 to run at fCLK/64 and count to 125,
 	 * giving us interrupts at 500Hz */
 	OCR0A = 124;
@@ -106,11 +103,6 @@ void tlc_init()
 	TIMSK = 1 << OCIE0A;
 	TIFR = 1 << OCF0A;
 	TCCR0B = 3 << CS00;
-}
-
-void tlc_clear()
-{
-	memset(display, 0, sizeof(display));
 }
 
 void tlc_show_time()
