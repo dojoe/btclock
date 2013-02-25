@@ -26,20 +26,21 @@ static uint8_t parse_bcd(char *text, uint8_t *data, uint8_t size)
 
 static uint8_t set_time()
 {
-	uint8_t data[6];
+	uint8_t data[7];
 
-	if (cmd_buf_ptr != 14)
+	if (cmd_buf_ptr != 16)
 		return 0;
 
-	if (!parse_bcd(cmd_buf + 2, data, 6))
+	if (!parse_bcd(cmd_buf + 2, data, 7))
 		return 0;
 
-	if (data[1] > 0x12 || data[2] > 0x31 || data[3] > 0x23 || data[4] > 0x59 || data[5] > 0x59)
+	if (data[1] > 0x12 || data[2] > 0x31 || data[3] > 0x23 || data[4] > 0x59 || data[5] > 0x59 || data[6] > 0x6)
 	{
 		return 0;
 	}
 
-	rtc_set_time(data[0], data[1], data[2], data[3], data[4], data[5]);
+	rtc_set_time(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+	check_timespans();
 
 	return 1;
 }
@@ -62,7 +63,9 @@ static uint8_t get_time()
 	uart_putc('0');
 	print_bcd_plus_char(time.year, '-');
 	print_bcd_plus_char(time.month, '-');
-	print_bcd_plus_char(time.day, ' ');
+	print_bcd_plus_char(time.day, '(');
+	print_bcd_plus_char(time.weekday, ')');
+	uart_putc(' ');
 	print_bcd_plus_char(time.hour, ':');
 	print_bcd_plus_char(time.minute, ':');
 	print_bcd_plus_char(time.second, '\n');
@@ -194,15 +197,12 @@ static uint8_t set_special(uint8_t index)
 	struct timespan when;
 	uint8_t what = 0;
 
-	if (!parse_timespan(cmd_buf + 2, cmd_buf_ptr - 2, &when))
+	if (cmd_buf_ptr < 13 || !parse_timespan(cmd_buf + 2, cmd_buf_ptr - 2, &when))
 		return 0;
 
-	if (index)
-	{
-		if (cmd_buf_ptr < 13 || cmd_buf[11] != ',' || cmd_buf[12] < '1' || cmd_buf[12] > '0' + NUM_LINES)
-			return 0;
-		what = cmd_buf[12] - '1';
-	}
+	if (cmd_buf[11] != ',' || cmd_buf[12] < '1' || cmd_buf[12] > '0' + NUM_LINES)
+		return 0;
+	what = cmd_buf[12] - '1';
 
 	set_special_time(index, &when, what);
 	return 1;
@@ -215,12 +215,8 @@ static uint8_t get_special(uint8_t index)
 	print_bcd(span.start >> 8);
 	print_bcd_plus_char(span.start & 0xFF, '-');
 	print_bcd(span.end >> 8);
-	print_bcd(span.end & 0xFF);
-	if (index)
-	{
-		uart_putc(',');
-		uart_putc('1' + which);
-	}
+	print_bcd_plus_char(span.end & 0xFF, ',');
+	uart_putc('1' + which);
 	uart_putc('\n');
 	return 1;
 }

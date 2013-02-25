@@ -73,7 +73,7 @@ void rtc_init()
 		RTC_END();
 
 		/* Clear time values */
-		rtc_set_time(0x13, 0x01, 0x01, 0x00, 0x00, 0x00);
+		rtc_set_time(0x13, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00);
 	}
 	else
 	{
@@ -88,7 +88,7 @@ void rtc_init()
 }
 
 void rtc_set_time(uint8_t year, uint8_t month, uint8_t day,
-		uint8_t hours, uint8_t minutes, uint8_t seconds)
+		uint8_t hours, uint8_t minutes, uint8_t seconds, uint8_t weekday)
 {
 	RTC_BEGIN();
 	spi_xfer(RTC_WRITE_CMD(2));
@@ -96,7 +96,7 @@ void rtc_set_time(uint8_t year, uint8_t month, uint8_t day,
 	spi_xfer(minutes);
 	spi_xfer(hours);
 	spi_xfer(day);
-	spi_xfer(0);  /* weekdays mean nothing to us */
+	spi_xfer(weekday);
 	spi_xfer(month);
 	spi_xfer(year);
 	RTC_END();
@@ -113,7 +113,7 @@ void rtc_get_time()
 	time.minute = spi_xfer(0) & 0x7F;
 	time.hour = spi_xfer(0) & 0x3F;
 	time.day = spi_xfer(0) & 0x3F;
-	spi_xfer(0); /* skip weekday */
+	time.weekday = spi_xfer(0) & 0x07;
 	time.month = spi_xfer(0) & 0x1F;
 	time.year = spi_xfer(0);
 	RTC_END();

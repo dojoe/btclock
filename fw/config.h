@@ -11,9 +11,9 @@
 #include <avr/eeprom.h>
 
 #define NUM_SPECIALS 2
-#define MAX_SEQUENCE 8
+#define MAX_SEQUENCE 10
 #define NUM_LINES 5
-#define TEXT_MAX 45
+#define TEXT_MAX 44
 
 #define SEQ_TIME 255
 #define SEQ_DATE 254
@@ -38,10 +38,11 @@ struct config_s {
 		struct special specials[NUM_SPECIALS + 1];
 		struct {
 			struct timespan blank_time;
-			uint8_t line_modes;
+			uint8_t blank_weekend;
 		};
 	};
 	struct sequence_entry sequence[MAX_SEQUENCE];
+	uint8_t line_modes;
 	char lines[NUM_LINES][TEXT_MAX];
 };
 
@@ -77,8 +78,7 @@ static inline void get_line(uint8_t index, char *buf)
 static inline void set_special_time(uint8_t index, struct timespan *span, uint8_t what)
 {
 	eeprom_update_block(span, &config.specials[index].when, sizeof(struct timespan));
-	if (index)
-		eeprom_update_byte(&config.specials[index].what, what);
+	eeprom_update_byte(&config.specials[index].what, what);
 	check_timespans();
 }
 

@@ -33,32 +33,23 @@ static void set_display(uint8_t which)
 	{
 		char *dest = text_line + 3;
 		uint8_t *src = (uint8_t *)config.lines[which];
-		uint8_t prev_c, c, len = 0;
+		uint8_t c, len = 0;
 
 		display_mode = STATIC;
 
 		memset(text_line, 0, sizeof(text_line));
-		prev_c = 0;
 		while (1)
 		{
 			c = eeprom_read_byte(src++);
 			if (!c)
 				break;
 			if ('.' == c && len)
-			{
-				if ('.' == prev_c)
-				{
-					dest++;
-					len++;
-				}
 				*(dest - 1) |= 0x80;
-			}
 			else
 			{
 				*dest++ = c;
 				len++;
 			}
-			prev_c = c;
 		}
 
 		text_line_offset = 0;
@@ -100,7 +91,8 @@ static uint8_t in_timespan(struct timespan *span)
 void check_timespans()
 {
 	uint8_t i = NUM_SPECIALS;
-	blank = in_timespan(&config.blank_time);
+	blank = in_timespan(&config.blank_time) ||
+			(eeprom_read_byte(&config.blank_weekend) && (time.weekday == 5 || time.weekday == 6));
 	while (i)
 	{
 		if (in_timespan(&config.specials[i].when))

@@ -21,7 +21,7 @@ Connect to the serial port using 9600 8N1 (9600 Baud, 8 data bits, no parity and
 
   - Display the current time in 24-hour format, with blinking second dot
   - Display the current date in DD.MM. format
-  - Display up to five arbitrary lines of text up to 45 characters each
+  - Display up to five arbitrary lines of text up to 43 characters each
      - If a line is longer than four characters, it will be scrolled across the display
      - Two scroll modes exist: Data Display mode and Marquee mode
      - Data Display mode will hold the beginning and end of the line for a short while; ideal for displaying data
@@ -39,8 +39,9 @@ The clock understands a few simple commands (as in "simple to parse by a microco
 Each command must be completed by a newline (LF, to be exact, CRs will be tolerated, but ignored).
 The clock will respond "OK" if the command was correct, or "Nope" if not.
 
-T=YYMMDDhhmmss
+T=YYMMDDhhmmssWW
     Set the time, 24-hour format. Invalid values will be rejected.
+    WW designates the day-of-week, with 00=Monday, 01=Tuesday, ..., 06=Sunday
     
 T?
 	Query the current time. The clock will respond the current time before "OK".
@@ -61,7 +62,7 @@ T?
 S=Xttt[,Xttt[,...]]
     Configure the display sequence. 
     The sequence defines what will be displayed on the clock, in which order, and for how long.
-    The sequence can consist of up to eight elements, separated by commas. It repeats after the last element.
+    The sequence can consist of up to ten elements, separated by commas. It repeats after the last element.
     Each element starts with one character defining what should be displayed (the X), followed (without space) by a (decimal) time in seconds.
     For X, you have a choice of:
       "T" - display the current time
@@ -73,13 +74,26 @@ S=Xttt[,Xttt[,...]]
 S?
     Query the sequence. Will respond with the sequence and "OK".
 
-B=HHMM-HHMM
+B=HHMM-HHMM,X
 	Set the blank time. Starting with the first time, and up to the second time, the clock will blank its display.
-	For example, "B=1800-0800" will keep the display off outside normal work hours.
-	Likewise, "B=0800-1600" seems like a sensible setting for a hackerspace ;)
+	Additionally, specify X as "1" if the clock shall run during the weekend, "2" if the clock shall turn off during the weekend.
+	For example, "B=1800-0800,2" will keep the display off outside normal work hours.
+	Likewise, "B=0800-1600,1" seems like a sensible setting for a hackerspace ;)
 
 B?
 	Query the blank time setting. Will respond with the blank time and "OK".
+
+C=HHMM-HHMM,L
+	Set line L to be displayed starting with the first time and up to the second time.
+	During the programmed time, this line will override the normal display sequence, but not the blank times.
+	For example, "C=1200-1230,4" would display line 4 between 12:00 and 12:30.
+
+C?
+	Query the special line setting.
+
+D=HHMM-HHMM,L
+D?
+	This is a second special line setting, similar to C=...
 
 
 5. Example configuration:
