@@ -22,26 +22,9 @@ static const PROGMEM char jocki[] = "Jocki hat Geburtstag";
 
 ISR(INT0_vect)
 {
-	uint8_t hour, minute, second;
+	rtc_get_time();
 
-	/* Read current time from RTC */
-	RTC_BEGIN();
-	spi_xfer(RTC_READ_CMD(2));
-	time.second = second = spi_xfer(0) & 0x7F;
-	time.minute = minute = spi_xfer(0) & 0x7F;
-	time.hour = hour = spi_xfer(0) & 0x3F;
-
-	/* only read date on midnight */
-	if (!second && !minute && !hour)
-	{
-		time.day = spi_xfer(0) & 0x3F;
-		spi_xfer(0); /* skip weekday */
-		time.month = spi_xfer(0) & 0x1F;
-		time.year = spi_xfer(0);
-	}
-	RTC_END();
-
-	if (!minute && !second && 0x03 == time.month && 0x19 == time.day)
+	if (!time.minute && !time.second && 0x03 == time.month && 0x19 == time.day)
 	{
 		memset(text_line, 0, sizeof(text_line));
 		memcpy_P(text_line + 3, jocki, sizeof(jocki));
@@ -49,6 +32,7 @@ ISR(INT0_vect)
 		text_line_offset = 0;
 		display_mode = TEXT_2;
 		countdown = 60;
+		cur_line = SEQ_NOTHING;
 	}
 	else if (TIME == display_mode)
 	{

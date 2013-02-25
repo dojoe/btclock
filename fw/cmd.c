@@ -109,7 +109,12 @@ static uint8_t set_sequence()
 			if (c < '0' || c > '9')
 				return 0;
 
-			duration *= 10;
+			{   /* multiply duration by 10 */
+				uint8_t tmp = duration;
+				duration <<= 2;
+				duration += tmp;
+				duration <<= 1;
+			}
 			duration += c - '0';
 		}
 
@@ -169,18 +174,15 @@ static uint8_t parse_timespan(char *text, uint8_t len, struct timespan *span)
 	if (len < 9 || text[4] != '-')
 		return 0;
 
-	if (!parse_bcd(text, b, 2))
+	if (!parse_bcd(text, b, 2) || b[0] > 0x23 || b[1] > 0x59)
 		return 0;
 
 	start = b[0] << 8 | b[1];
 
-	if (!parse_bcd(text + 5, b, 2))
+	if (!parse_bcd(text + 5, b, 2) || b[0] > 0x23 || b[1] > 0x59)
 		return 0;
 
 	end = b[0] << 8 | b[1];
-
-	if (start > 0x2359 || end > 0x2359)
-		return 0;
 
 	span->start = start;
 	span->end = end;
@@ -232,7 +234,7 @@ static uint8_t cmd_parse()
 		return 0;
 
 	if (type == 'T')
-		return set ? set_time() : get_time();
+			return set ? set_time() : get_time();
 	else if (type == 'S')
 		return set ? set_sequence() : get_sequence();
 	else if (type >= 'B' && type <= 'B' + NUM_SPECIALS)

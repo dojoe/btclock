@@ -8,30 +8,11 @@
 #include "btclock.h"
 #include <avr/eeprom.h>
 
-static EEMEM struct {
-	union {
-		struct special specials[NUM_SPECIALS + 1];
-		struct {
-			struct timespan blank_time;
-			uint8_t line_modes;
-		};
-	};
-	struct sequence_entry sequence[MAX_SEQUENCE];
-	char lines[NUM_LINES][TEXT_MAX];
-} config = { .sequence = {{ SEQ_TIME, 1}}};
-
+EEMEM struct config_s config = { .sequence = {{ SEQ_TIME, 1}}};
 struct sequence_entry sequence[MAX_SEQUENCE];
-
 uint8_t countdown;
-
-static uint8_t sequence_ptr;
-static uint8_t cur_line = SEQ_NOTHING;
-
-void config_init()
-{
-	eeprom_read_block(sequence, config.sequence, sizeof(config.sequence));
-	next_line();
-}
+uint8_t sequence_ptr;
+uint8_t cur_line = SEQ_NOTHING;
 
 static void set_display(uint8_t which)
 {
@@ -50,13 +31,41 @@ static void set_display(uint8_t which)
 	}
 	else
 	{
+		char *dest = text_line + 3;
+		uint8_t *src = (uint8_t *)config.lines[which];
+		uint8_t prev_c, c, len = 0;
+
 		display_mode = STATIC;
-		eeprom_read_block(text_line + 3, config.lines[which], TEXT_MAX);
+
+		memset(text_line, 0, sizeof(text_line));
+		prev_c = 0;
+		while (1)
+		{
+			c = eeprom_read_byte(src++);
+			if (!c)
+				break;
+			if ('.' == c && len)
+			{
+				if ('.' == prev_c)
+				{
+					dest++;
+					len++;
+				}
+				*(dest - 1) |= 0x80;
+			}
+			else
+			{
+				*dest++ = c;
+				len++;
+			}
+			prev_c = c;
+		}
+
 		text_line_offset = 0;
-		text_line_length = strlen(text_line + 3);
+		text_line_length = len;
 		display_mode = (eeprom_read_byte(&config.line_modes) & (1 << which)) ? TEXT_2 : TEXT_1;
-		cur_line = which;
 	}
+	cur_line = which;
 }
 
 void next_line()
@@ -103,13 +112,6 @@ void check_timespans()
 	}
 }
 
-void save_sequence()
-{
-	eeprom_update_block(sequence, config.sequence, sizeof(sequence));
-	sequence_ptr = 0;
-	countdown = 0;
-}
-
 void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode)
 {
 	uint8_t line_modes, mode_mask;
@@ -128,20 +130,3 @@ void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode)
 	cur_line = SEQ_NOTHING; // make sure we copy the line at next update
 }
 
-void get_line(uint8_t index, char *buf)
-{
-	eeprom_read_block(buf, config.lines[index], TEXT_MAX);
-}
-
-void set_special_time(uint8_t index, struct timespan *span, uint8_t what)
-{
-	eeprom_update_block(span, &config.specials[index].when, sizeof(struct timespan));
-	if (index)
-		eeprom_update_byte(&config.specials[index].what, what);
-}
-
-uint8_t get_special_time(uint8_t index, struct timespan *span)
-{
-	eeprom_read_block(span, &config.specials[index].when, sizeof(struct timespan));
-	return eeprom_read_byte(&config.specials[index].what);
-}

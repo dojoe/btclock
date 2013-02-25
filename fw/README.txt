@@ -2,17 +2,22 @@
 ===========================
 
 1. Connecting for the first time
+--------------------------------
 
    1. Press the button on the controller board for a second or more, then release it.
    2. The clock will choose a random Bluetooth PIN and display it for 30 seconds.
    3. Search for Bluetooth devices on your computer, pair with "BT Clock", use the PIN you saw.
+
    
 2. Connecting to the clock for control
+--------------------------------------
 
 After pairing, the clock will offer a Bluetooth Serial Port. On my system, I actually saw two; if that happens, pick the first.
 Connect to the serial port using 9600 8N1 (9600 Baud, 8 data bits, no parity and one stop bit).
 
+
 3. What the clock can do
+------------------------
 
   - Display the current time in 24-hour format, with blinking second dot
   - Display the current date in DD.MM. format
@@ -26,7 +31,9 @@ Connect to the serial port using 9600 8N1 (9600 Baud, 8 data bits, no parity and
   - Time is backed by a large capacitor and will continue running for about half a day if the power is interrupted
   - Configuration is stored in non-volatile memory and will survive power outages for as long as it takes 
 
+
 4. How to set up the clock
+--------------------------
 
 The clock understands a few simple commands (as in "simple to parse by a microcontroller" ;).
 Each command must be completed by a newline (LF, to be exact, CRs will be tolerated, but ignored).
@@ -40,7 +47,7 @@ T?
 
 <N>=[!]<text>
 	Set a text line, where <N> is a number between 1 and 5 and <text> is arbitrary text up to 45 characters.
-	Valid characters are 1-9, a-z, A-Z, but case does not matter here. It's hard enough to invent a font for 7-segment displays as it is ;)
+	Valid characters are 1-9, a-z, A-Z and ., but case does not matter. It's hard enough to invent a font for 7-segment displays as it is ;)
 	Also, there are some special characters:
 	   '=' will yield a dash
 	   '<' will yield a capital C (as opposed to the lower-case c you get with 'c' and 'C')
@@ -73,4 +80,24 @@ B=HHMM-HHMM
 
 B?
 	Query the blank time setting. Will respond with the blank time and "OK".
-  
+
+
+5. Example configuration:
+-------------------------
+
+T=130225193030
+1= 132
+4=!    scrum
+B=1900-0800
+C=1245-1250,1
+S=T30,D5,115
+
+This means, in order:
+ * Set the current time
+ * Set line one to display, say the current number of FIXMEs in our code ;)
+   Note how the line starts with a space so the three-figure number is right-aligned.
+ * Set line four to scroll "scrum" in Marquee Mode. Add some spaces so there is a bit of pause between the "scrum"s.
+ * Set the clock to blank outside normal office hours
+ * Announce Scrum each day from 1245 to 1250.
+ * Set the normal sequence to display the time for 30s, the date for 5s and the number of FIXMEs for 15s.
+ 

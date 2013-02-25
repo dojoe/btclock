@@ -82,14 +82,7 @@ ISR(TIMER0_COMPA_vect)
 			offset = 3;
 		}
 		for (i = 0; i < 4; i++)
-		{
 			display[i] = font_get_char(text_line[offset++]);
-			if ('.' == text_line[offset])
-			{
-				display[i] |= DP;
-				offset++;
-			}
-		}
 	}
 }
 

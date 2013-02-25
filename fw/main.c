@@ -8,10 +8,6 @@
 #include "btclock.h"
 #include <avr/sleep.h>
 
-/* TODO:
- *   - scrolling with fullstops in text
- */
-
 volatile enum display_mode_e display_mode;
 
 uint8_t poll_button()

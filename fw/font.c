@@ -15,12 +15,14 @@ static const PROGMEM uint16_t font[FONTSIZE];
 
 uint16_t font_get_char(char c)
 {
+	uint16_t dp = c & 0x80 ? DP : 0;
+	c &= 0x7F;
 	if (c >= FONTLOW && c <= FONTHIGH)
-		return pgm_read_word(font + (c - FONTLOW));
+		return pgm_read_word(font + (c - FONTLOW)) | dp;
 	else if (c >= 'a' && c <= 'z')
-		return pgm_read_word(font + (c - ('a' - 'A') - FONTLOW));
+		return pgm_read_word(font + (c - ('a' - 'A') - FONTLOW)) | dp;
 	else
-		return 0;
+		return dp;
 }
 
 uint16_t font_get_digit(uint8_t value)
