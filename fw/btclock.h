@@ -47,7 +47,7 @@ uint16_t font_get_digit(uint8_t value);
 
 /* main.c */
 
-enum display_mode_e { STATIC, TIME, DATE, TEXT_1, TEXT_2 };
+enum display_mode_e { STATIC, TIME, DATE, TEXT_1, TEXT_2, BTPIN };
 extern volatile enum display_mode_e display_mode;
 
 /* rtc.c */

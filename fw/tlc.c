@@ -22,7 +22,7 @@ ISR(TIMER0_COMPA_vect)
 {
 	uint8_t segport_clear = SEGPORT | SEGMASK;
 
-	if (blank)
+	if (blank && BTPIN != display_mode)
 	{
 		LATCHPORT |= 1 << BLANK;
 		SEGPORT = segport_clear;

@@ -56,8 +56,9 @@ void bt_new_pin()
 			digit -= 10;
 		setpin[8 + i] = digit + '0';
 		display[i] = font_get_digit(digit);
-		display_mode = STATIC;
+		display_mode = BTPIN;
 		countdown = 30;
+		cur_line = SEQ_NOTHING;
 	}
 
 	bt_send(setpin);
