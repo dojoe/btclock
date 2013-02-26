@@ -79,19 +79,20 @@ LICENSE:
 #define UART_TX_BUFFER_SIZE 8
 #endif
 
+/* size of RX/TX buffers */
+#define UART_RX_BUFFER_MASK ( UART_RX_BUFFER_SIZE - 1)
+#define UART_TX_BUFFER_MASK ( UART_TX_BUFFER_SIZE - 1)
+
+
 /* test if the size of the circular buffers fits into SRAM */
 #if ( (UART_RX_BUFFER_SIZE+UART_TX_BUFFER_SIZE) >= (RAMEND-0x60 ) )
 #error "size of UART_RX_BUFFER_SIZE + UART_TX_BUFFER_SIZE larger than size of SRAM"
 #endif
 
-/* 
-** high byte error return code of uart_getc()
-*/
-#define UART_FRAME_ERROR      0x1000              /* Framing Error by UART       */
-#define UART_OVERRUN_ERROR    0x0800              /* Overrun condition by UART   */
-#define UART_PARITY_ERROR     0x0400              /* Parity Error by UART        */ 
-#define UART_BUFFER_OVERFLOW  0x0200              /* receive ringbuffer overflow */
-#define UART_NO_DATA          0x0100              /* no receive data available   */
+
+extern volatile unsigned char UART_RxBuf[UART_RX_BUFFER_SIZE];
+extern volatile unsigned char UART_RxHead;
+extern volatile unsigned char UART_RxTail;
 
 
 /*
@@ -106,32 +107,26 @@ LICENSE:
 extern void uart_init(unsigned int baudrate);
 
 
-/**
- *  @brief   Get received byte from ringbuffer
- *
- * Returns in the lower byte the received character and in the 
- * higher byte the last receive error.
- * UART_NO_DATA is returned when no data is available.
- *
- *  @param   void
- *  @return  lower byte:  received byte from ringbuffer
- *  @return  higher byte: last receive status
- *           - \b 0 successfully received data from UART
- *           - \b UART_NO_DATA           
- *             <br>no receive data available
- *           - \b UART_BUFFER_OVERFLOW   
- *             <br>Receive ringbuffer overflow.
- *             We are not reading the receive buffer fast enough, 
- *             one or more received character have been dropped 
- *           - \b UART_OVERRUN_ERROR     
- *             <br>Overrun condition by UART.
- *             A character already present in the UART UDR register was 
- *             not read by the interrupt handler before the next character arrived,
- *             one or more received characters have been dropped.
- *           - \b UART_FRAME_ERROR       
- *             <br>Framing Error by UART
- */
-extern unsigned int uart_getc(void);
+static inline uint8_t uart_avail()
+{
+    if ( UART_RxHead == UART_RxTail ) {
+        return 0;   /* no data available */
+    }
+    return 1;
+}
+
+static inline uint8_t uart_getc(void)
+{
+    unsigned char tmptail;
+
+    /* calculate /store buffer index */
+    tmptail = (UART_RxTail + 1) & UART_RX_BUFFER_MASK;
+    UART_RxTail = tmptail;
+
+    /* get data from receive buffer */
+    return UART_RxBuf[tmptail];
+}/* uart_getc */
+
 
 
 /**

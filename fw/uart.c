@@ -46,9 +46,6 @@ LICENSE:
  *  constants and macros
  */
 
-/* size of RX/TX buffers */
-#define UART_RX_BUFFER_MASK ( UART_RX_BUFFER_SIZE - 1)
-#define UART_TX_BUFFER_MASK ( UART_TX_BUFFER_SIZE - 1)
 
 #if ( UART_RX_BUFFER_SIZE & UART_RX_BUFFER_MASK )
 #error RX buffer size is not a power of 2
@@ -230,12 +227,11 @@ LICENSE:
  *  module global variables
  */
 static volatile unsigned char UART_TxBuf[UART_TX_BUFFER_SIZE];
-static volatile unsigned char UART_RxBuf[UART_RX_BUFFER_SIZE];
+volatile unsigned char UART_RxBuf[UART_RX_BUFFER_SIZE];
 static volatile unsigned char UART_TxHead;
 static volatile unsigned char UART_TxTail;
-static volatile unsigned char UART_RxHead;
-static volatile unsigned char UART_RxTail;
-static volatile unsigned char UART_LastRxError;
+volatile unsigned char UART_RxHead;
+volatile unsigned char UART_RxTail;
 
 #if defined( ATMEGA_USART1 )
 static volatile unsigned char UART1_TxBuf[UART_TX_BUFFER_SIZE];
@@ -257,38 +253,20 @@ Purpose:  called when the UART has received a character
 {
     unsigned char tmphead;
     unsigned char data;
-    unsigned char usr;
-    unsigned char lastRxError;
  
  
     /* read UART status register and UART data register */ 
-    usr  = UART0_STATUS;
     data = UART0_DATA;
     
     /* */
-#if defined( AT90_UART )
-    lastRxError = (usr & (_BV(FE)|_BV(DOR)) );
-#elif defined( ATMEGA_USART )
-    lastRxError = (usr & (_BV(FE)|_BV(DOR)) );
-#elif defined( ATMEGA_USART0 )
-    lastRxError = (usr & (_BV(FE0)|_BV(DOR0)) );
-#elif defined ( ATMEGA_UART )
-    lastRxError = (usr & (_BV(FE)|_BV(DOR)) );
-#endif
         
     /* calculate buffer index */ 
     tmphead = ( UART_RxHead + 1) & UART_RX_BUFFER_MASK;
     
-    if ( tmphead == UART_RxTail ) {
-        /* error: receive buffer overflow */
-        lastRxError = UART_BUFFER_OVERFLOW >> 8;
-    }else{
         /* store new index */
         UART_RxHead = tmphead;
         /* store received data in buffer */
         UART_RxBuf[tmphead] = data;
-    }
-    UART_LastRxError |= lastRxError;   
 }
 
 
@@ -398,29 +376,6 @@ Purpose:  return byte from ringbuffer
 Returns:  lower byte:  received byte from ringbuffer
           higher byte: last receive error
 **************************************************************************/
-unsigned int uart_getc(void)
-{    
-    unsigned char tmptail;
-    unsigned char data;
-
-
-    if ( UART_RxHead == UART_RxTail ) {
-        return UART_NO_DATA;   /* no data available */
-    }
-    
-    /* calculate /store buffer index */
-    tmptail = (UART_RxTail + 1) & UART_RX_BUFFER_MASK;
-    UART_RxTail = tmptail; 
-    
-    /* get data from receive buffer */
-    data = UART_RxBuf[tmptail];
-    
-    data = (UART_LastRxError << 8) + data;
-    UART_LastRxError = 0;
-    return data;
-
-}/* uart_getc */
-
 
 /*************************************************************************
 Function: uart_putc()

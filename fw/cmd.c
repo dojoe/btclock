@@ -251,7 +251,8 @@ static uint8_t cmd_parse()
 		}
 		else
 		{
-			get_line(type, cmd_buf);
+			if (get_line(type, cmd_buf))
+				uart_putc('!');
 			uart_puts(cmd_buf);
 			uart_putc('\n');
 		}
@@ -265,10 +266,10 @@ void cmd_poll()
 {
 	while (1)
 	{
-		unsigned int rc = uart_getc();
-		char c = rc & 0xFF;
-		if (rc & UART_NO_DATA)
+		char c;
+		if (!uart_avail())
 			return;
+		c = uart_getc();
 		if (c == '\n')
 		{
 			/* filter out empty commands and "OK" responses from BT module */

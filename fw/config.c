@@ -92,7 +92,7 @@ void check_timespans()
 {
 	uint8_t i = NUM_SPECIALS;
 	blank = in_timespan(&config.blank_time) ||
-			(eeprom_read_byte(&config.blank_weekend) && (time.weekday == 5 || time.weekday == 6));
+			(eeprom_read_byte(&config.blank_weekend) && time.weekday >=5);
 	while (i)
 	{
 		if (in_timespan(&config.specials[i].when))

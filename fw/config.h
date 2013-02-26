@@ -70,9 +70,10 @@ static inline void save_sequence()
 	countdown = 0;
 }
 
-static inline void get_line(uint8_t index, char *buf)
+static inline uint8_t get_line(uint8_t index, char *buf)
 {
 	eeprom_read_block(buf, config.lines[index], TEXT_MAX);
+	return eeprom_read_byte(&config.line_modes) & (1 << index);
 }
 
 static inline void set_special_time(uint8_t index, struct timespan *span, uint8_t what)
