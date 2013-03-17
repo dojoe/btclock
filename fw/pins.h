@@ -42,7 +42,7 @@
 
 #define SEGPORT     PORTD
 #define SEGDDR      DDRD
-#define SEGBASE     PD3
+#define SEGBASE     BOARD_SEGBASE
 #define SEGMASK     (0xF << SEGBASE)
 
 #define LATCHPORT   PORTB
@@ -52,7 +52,7 @@
 
 #define HZPORT      PORTD
 #define HZDDR       DDRD
-#define HZPIN       PD2
+#define HZPIN       BOARD_HZPIN
 
 #define PORTB_INIT  (1 << BTRESET) | (1 << BLANK)
 #define DDRB_INIT   (1 << BTRESET) | (1 << RTCCE) | \

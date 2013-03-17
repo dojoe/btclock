@@ -20,7 +20,11 @@ char text_line[TEXT_MAX + 8];
 
 ISR(TIMER0_COMPA_vect)
 {
+#ifdef BOARD_SEGS_ARE_ACTIVE_LOW
 	uint8_t segport_clear = SEGPORT | SEGMASK;
+#else
+	uint8_t segport_clear = SEGPORT & ~SEGMASK;
+#endif
 
 	if (blank && BTPIN != display_mode)
 	{
@@ -32,7 +36,11 @@ ISR(TIMER0_COMPA_vect)
 		/* prepare new values for TLC register and segment enables */
 		uint8_t cur_segment = int_counter & 3;
 		uint16_t bits = display[cur_segment];
+#ifdef BOARD_SEGS_ARE_ACTIVE_LOW
 		uint8_t new_segport = (segport_clear & ~SEGMASK) | (~((8 << SEGBASE) >> cur_segment) & SEGMASK);
+#else
+		uint8_t new_segport = segport_clear | ((8 << SEGBASE) >> cur_segment);
+#endif
 
 		/* Clear the segment drivers early to account for slow recovery time */
 		SEGPORT = segport_clear;

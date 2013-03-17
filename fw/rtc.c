@@ -20,8 +20,16 @@ volatile uint8_t tick;
 
 static const PROGMEM char jocki[] = "Jocki hat Geburtstag";
 
+#ifdef BOARD_USE_HZ_PCINT
+ISR(PCINT_D_vect)
+{
+	// only trigger on rising edge
+	if (!(HZPORT & (1 << HZPIN)))
+		return;
+#else
 ISR(INT0_vect)
 {
+#endif
 	rtc_get_time();
 
 	if (!time.minute && !time.second && 0x03 == time.month && 0x19 == time.day)
@@ -82,9 +90,15 @@ void rtc_init()
 	}
 
 	/* Enable 1HZ interrupt _after_ setting up RTC CLKOUT */
+#ifdef BOARD_USE_HZ_PCINT
+	PCMSK2 |= 1 << PCINT17;
+	GIMSK  |= 1 << 4; // PCIE2 / PCIF2 somehow not defined
+	EIFR   |= 1 << 4;
+#else
 	MCUCR |= 3 << ISC00;
 	GIMSK |= 1 << INT0;
 	EIFR  |= 1 << INT0;
+#endif
 }
 
 void rtc_set_time(uint8_t year, uint8_t month, uint8_t day,

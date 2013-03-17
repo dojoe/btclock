@@ -30,8 +30,8 @@ int main(void)
 	config_init();
 	tlc_init();
 	bt_init();
-
 	set_sleep_mode(SLEEP_MODE_IDLE);
+
 	while (1)
 	{
 		if (tick)  /* happens once every second */

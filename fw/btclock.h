@@ -8,6 +8,8 @@
 #ifndef BTCLOCK_H_
 #define BTCLOCK_H_
 
+#define BOARD_VERSION 2
+
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
@@ -17,6 +19,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include "board.h"
 #include "pins.h"
 #include "uart.h"
 
