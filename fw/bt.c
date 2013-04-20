@@ -7,18 +7,6 @@
 
 #include "btclock.h"
 
-static void bt_send(const char *str)
-{
-	uart_puts(str);
-}
-
-static void bt_send_p(const char *str)
-{
-	uart_puts_p(str);
-}
-
-#define bt_send_P(str) bt_send_p(PSTR(str))
-
 void bt_init()
 {
 	/* reset BT module */
@@ -37,8 +25,6 @@ void bt_init()
 
 	/* set up UART */
 	uart_init(UART_BAUD_SELECT(9600, F_CPU));
-
-	bt_send_P("AT+NAME=\"BT Clock\"\r\n");
 }
 
 static const PROGMEM char setpin_tmpl[] = "AT+PSWD=XXXX\r\n";
@@ -61,7 +47,7 @@ void bt_new_pin()
 		cur_line = SEQ_NOTHING;
 	}
 
-	bt_send(setpin);
+	uart_puts(setpin);
 }
 
 #if 0

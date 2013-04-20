@@ -54,7 +54,7 @@ extern uint8_t cur_line;
 
 void next_line();
 void check_timespans();
-void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode);
+void set_line(int8_t index, char *buf, uint8_t length, uint8_t mode);
 
 static inline void config_init()
 {

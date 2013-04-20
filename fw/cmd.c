@@ -223,7 +223,7 @@ static uint8_t get_special(uint8_t index)
 
 static uint8_t cmd_parse()
 {
-	char type = cmd_buf[0], op = cmd_buf[1];
+	int8_t type = cmd_buf[0], op = cmd_buf[1];
 	uint8_t set = ('=' == op);
 
 	if (cmd_buf_ptr == 1 || !(set || op == '?'))
@@ -238,7 +238,7 @@ static uint8_t cmd_parse()
 		uint8_t index = type - 'B';
 		return set ? set_special(index) : get_special(index);
 	}
-	else if (type >= '1' && type <= '0' + NUM_LINES)
+	else if (type >= '0' && type <= '0' + NUM_LINES)
 	{
 		type -= '1';
 		if (set)
@@ -251,6 +251,8 @@ static uint8_t cmd_parse()
 		}
 		else
 		{
+			if (type < 0)
+				return 0;
 			if (get_line(type, cmd_buf))
 				uart_putc('!');
 			uart_puts(cmd_buf);

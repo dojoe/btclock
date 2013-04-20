@@ -14,6 +14,33 @@ uint8_t countdown;
 uint8_t sequence_ptr;
 uint8_t cur_line = SEQ_NOTHING;
 
+static void set_display_line(uint8_t *src, uint8_t is_eeprom, uint8_t mode)
+{
+	char *dest = text_line + 3;
+	uint8_t c, len = 0;
+
+	display_mode = STATIC;
+
+	memset(text_line, 0, sizeof(text_line));
+	while (1)
+	{
+		c = is_eeprom ? eeprom_read_byte(src++) : *src++;
+		if (!c)
+			break;
+		if ('.' == c && len)
+			*(dest - 1) |= 0x80;
+		else
+		{
+			*dest++ = c;
+			len++;
+		}
+	}
+
+	text_line_offset = 0;
+	text_line_length = len;
+	display_mode = mode ? TEXT_2 : TEXT_1;
+}
+
 static void set_display(uint8_t which)
 {
 	if (cur_line == which)
@@ -31,30 +58,7 @@ static void set_display(uint8_t which)
 	}
 	else
 	{
-		char *dest = text_line + 3;
-		uint8_t *src = (uint8_t *)config.lines[which];
-		uint8_t c, len = 0;
-
-		display_mode = STATIC;
-
-		memset(text_line, 0, sizeof(text_line));
-		while (1)
-		{
-			c = eeprom_read_byte(src++);
-			if (!c)
-				break;
-			if ('.' == c && len)
-				*(dest - 1) |= 0x80;
-			else
-			{
-				*dest++ = c;
-				len++;
-			}
-		}
-
-		text_line_offset = 0;
-		text_line_length = len;
-		display_mode = (eeprom_read_byte(&config.line_modes) & (1 << which)) ? TEXT_2 : TEXT_1;
+		set_display_line((uint8_t *)config.lines[which], 1, eeprom_read_byte(&config.line_modes) & (1 << which));
 	}
 	cur_line = which;
 }
@@ -104,20 +108,29 @@ void check_timespans()
 	}
 }
 
-void set_line(uint8_t index, char *buf, uint8_t length, uint8_t mode)
+void set_line(int8_t index, char *buf, uint8_t length, uint8_t mode)
 {
 	uint8_t line_modes, mode_mask;
 
 	memset(buf + length, 0, TEXT_MAX - length);
-	eeprom_update_block(buf, config.lines[index], TEXT_MAX);
 
-	line_modes = eeprom_read_byte(&config.line_modes);
-	mode_mask = 1 << index;
-	if (mode)
-		line_modes |= mode_mask;
+	if (index < 0)
+	{
+		set_display_line((uint8_t *)buf, 0, mode);
+		countdown = 42;
+	}
 	else
-		line_modes &= ~mode_mask;
-	eeprom_update_byte(&config.line_modes, line_modes);
+	{
+		eeprom_update_block(buf, config.lines[index], TEXT_MAX);
+
+		line_modes = eeprom_read_byte(&config.line_modes);
+		mode_mask = 1 << index;
+		if (mode)
+			line_modes |= mode_mask;
+		else
+			line_modes &= ~mode_mask;
+		eeprom_update_byte(&config.line_modes, line_modes);
+	}
 
 	cur_line = SEQ_NOTHING; // make sure we copy the line at next update
 }

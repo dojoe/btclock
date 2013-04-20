@@ -94,6 +94,11 @@ C?
 D=HHMM-HHMM,L
 D?
 	This is a second special line setting, similar to C=...
+	
+0=[!]<text>
+	"Line 0" is sent directly to the display and will be shown for 42 seconds, without being stored to EEPROM.
+	Note there is no query command for this line. You can use this feature to display random, intermittent information
+	without putting write stress on the EEPROM.
 
 
 5. Example configuration:
