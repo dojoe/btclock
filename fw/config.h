@@ -76,10 +76,9 @@ static inline uint8_t get_line(uint8_t index, char *buf)
 	return eeprom_read_byte(&config.line_modes) & (1 << index);
 }
 
-static inline void set_special_time(uint8_t index, struct timespan *span, uint8_t what)
+static inline void set_special_time(uint8_t index, struct special *special)
 {
-	eeprom_update_block(span, &config.specials[index].when, sizeof(struct timespan));
-	eeprom_update_byte(&config.specials[index].what, what);
+	eeprom_update_block(special, &config.specials[index], sizeof(struct special));
 	check_timespans();
 }
 

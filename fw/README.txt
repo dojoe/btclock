@@ -37,7 +37,8 @@ Connect to the serial port using 9600 8N1 (9600 Baud, 8 data bits, no parity and
 
 The clock understands a few simple commands (as in "simple to parse by a microcontroller" ;).
 Each command must be completed by a newline (LF, to be exact, CRs will be tolerated, but ignored).
-The clock will respond "OK" if the command was correct, or "Nope" if not.
+The clock will respond "OK" if the command was correct, otherwise it will respond "No|" followed by the string it received.
+You can use that to debug connection/terminal problems.
 
 T=YYMMDDhhmmssWW
     Set the time, 24-hour format. Invalid values will be rejected.

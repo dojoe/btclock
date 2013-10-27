@@ -7,7 +7,7 @@
 
 #include "btclock.h"
 
-static char cmd_buf[TEXT_MAX + 2]; /* for "N=<up to TEXT_MAX chars>" */
+static char cmd_buf[TEXT_MAX + 3]; /* for "N=<up to TEXT_MAX chars>" */
 static uint8_t cmd_buf_ptr = 0;
 
 static uint8_t parse_bcd(char *text, uint8_t *data, uint8_t size)
@@ -171,40 +171,36 @@ static uint8_t get_sequence()
 
 static uint8_t parse_timespan(char *text, uint8_t len, struct timespan *span)
 {
-	uint16_t start, end;
-	uint8_t b[2];
+	static uint8_t b[2]; // static saves a few bytes here
 
-	if (len < 9 || text[4] != '-')
+	if (text[4] != '-')
 		return 0;
 
 	if (!parse_bcd(text, b, 2) || b[0] > 0x23 || b[1] > 0x59)
 		return 0;
 
-	start = b[0] << 8 | b[1];
+	span->start = b[0] << 8 | b[1];
 
 	if (!parse_bcd(text + 5, b, 2) || b[0] > 0x23 || b[1] > 0x59)
 		return 0;
 
-	end = b[0] << 8 | b[1];
-
-	span->start = start;
-	span->end = end;
+	span->end = b[0] << 8 | b[1];
 	return 1;
 }
 
 static uint8_t set_special(uint8_t index)
 {
-	struct timespan when;
-	uint8_t what = 0;
+	struct special special;
 
-	if (cmd_buf_ptr < 13 || !parse_timespan(cmd_buf + 2, cmd_buf_ptr - 2, &when))
+	if (cmd_buf_ptr < 13 || !parse_timespan(cmd_buf + 2, cmd_buf_ptr - 2, &special.when))
 		return 0;
 
 	if (cmd_buf[11] != ',' || cmd_buf[12] < '1' || cmd_buf[12] > '0' + NUM_LINES)
 		return 0;
-	what = cmd_buf[12] - '1';
 
-	set_special_time(index, &when, what);
+	special.what = cmd_buf[12] - '1';
+
+	set_special_time(index, &special);
 	return 1;
 }
 
@@ -244,8 +240,6 @@ static uint8_t cmd_parse()
 		if (set)
 		{
 			uint8_t mode;
-			if (cmd_buf_ptr - 2 > TEXT_MAX - 1)
-				return 0;
 			mode = '!' == cmd_buf[2] ? 1 : 0;
 			set_line(type, cmd_buf + 2 + mode, cmd_buf_ptr - 2 - mode, mode);
 		}
@@ -274,13 +268,20 @@ void cmd_poll()
 		c = uart_getc();
 		if (c == '\n')
 		{
-			/* filter out empty commands and "OK" responses from BT module */
-			if (cmd_buf_ptr &&
-					!(cmd_buf_ptr == 2 && cmd_buf[0] == 'O' && cmd_buf[1] == 'K'))
-				uart_puts_p(cmd_parse() ? PSTR("OK\n") : PSTR("Nope\n"));
+			cmd_buf[cmd_buf_ptr] = 0;
+			/* filter out empty commands and "OK" responses or "+DISC:SUCCESS" responses from BT module */
+			if (cmd_buf_ptr && !((cmd_buf[0] == 'O' && cmd_buf[1] == 'K') || (cmd_buf[0] == '+' && cmd_buf[1] == 'D'))) {
+				if (cmd_parse()) {
+					uart_puts_p(PSTR("OK\n"));
+				} else {
+					uart_puts_p(PSTR("No|"));
+					uart_puts(cmd_buf);
+					uart_putc('\n');
+				}
+			}
 			cmd_buf_ptr = 0;
 		}
-		else if (c != '\r' && cmd_buf_ptr < sizeof(cmd_buf))
+		else if (c != '\r' && cmd_buf_ptr < sizeof(cmd_buf) - 1)
 		{
 			cmd_buf[cmd_buf_ptr++] = c;
 		}
