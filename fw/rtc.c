@@ -24,7 +24,7 @@ static const PROGMEM char jocki[] = "Jocki hat Geburtstag";
 ISR(PCINT_D_vect)
 {
 	// only trigger on rising edge
-	if (!(HZPORT & (1 << HZPIN)))
+	if (!(HZPIN & (1 << HZBIT)))
 		return;
 #else
 ISR(INT0_vect)

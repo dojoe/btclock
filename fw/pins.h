@@ -50,15 +50,15 @@
 #define LATCH       PB3
 #define BLANK       PB4
 
-#define HZPORT      PORTD
+#define HZPIN       PIND
 #define HZDDR       DDRD
-#define HZPIN       BOARD_HZPIN
+#define HZBIT       BOARD_HZBIT
 
 #define PORTB_INIT  (1 << BTRESET) | (1 << BLANK)
 #define DDRB_INIT   (1 << BTRESET) | (1 << RTCCE) | \
 					(1 << LATCH) | (1 << BLANK) | (1 << SPISCK) | (1 << SPIDO)
 
-#define PORTD_INIT  (1 << HZPIN)
+#define PORTD_INIT  (1 << HZBIT)
 #define DDRD_INIT   SEGMASK
 
 #endif /* PINS_H_ */
